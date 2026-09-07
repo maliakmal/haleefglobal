@@ -1,0 +1,9 @@
+<?php
+require __DIR__ . '/includes/config.php';
+$pageTitle = 'Our Work'; $currentPage = 'work';
+require __DIR__ . '/includes/header.php';
+?>
+<section class="page-hero"><div class="container"><span class="eyebrow">Our work</span><h1>Ideas turned into<br>rooms that <em>matter.</em></h1><p>Selected event platforms and experiences conceived, shaped and delivered by Haleef.</p></div></section>
+<section class="case-study section"><div class="container case-grid"><div class="case-index">01 / Flagship platform</div><div class="case-main"><span class="eyebrow">MoneyAura</span><h2>Building a pan-regional platform for financial innovation.</h2><p class="lead">More than a conference, MoneyAura connects the forces shaping banking, fintech, payments and financial inclusion through purposeful content, strategic meetings and industry recognition.</p><div class="case-meta"><div><span>Format</span><b>Conference · Awards · Networking</b></div><div><span>Markets</span><b>East & West Africa</b></div><div><span>Audience</span><b>Financial services leaders</b></div></div><a class="button button-dark" href="<?= MONEYAURA_URL ?>" target="_blank" rel="noopener">Explore MoneyAura <span>↗</span></a></div></div></section>
+<section class="dark-panel"><div class="container"><span class="eyebrow eyebrow-gold">The Haleef approach</span><div class="process-grid"><article><b>01</b><h3>Find the purpose</h3><p>Clarify why the room needs to exist and who needs to be in it.</p></article><article><b>02</b><h3>Shape the platform</h3><p>Build the content, experience, partnerships and commercial logic.</p></article><article><b>03</b><h3>Deliver with intent</h3><p>Coordinate every moving part around the outcome—not just the schedule.</p></article></div></div></section>
+<?php require __DIR__ . '/includes/cta.php'; require __DIR__ . '/includes/footer.php'; ?>
