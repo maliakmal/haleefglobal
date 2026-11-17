@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://haleefglobal.com/</loc></url>
-  <url><loc>https://haleefglobal.com/services.php</loc></url>
-  <url><loc>https://haleefglobal.com/work.php</loc></url>
-  <url><loc>https://haleefglobal.com/about.php</loc></url>
-  <url><loc>https://haleefglobal.com/contact.php</loc></url>
+  <url><loc>https://haleefglobal.com/services</loc></url>
+  <url><loc>https://haleefglobal.com/services/event-management</loc></url>
+  <url><loc>https://haleefglobal.com/services/event-advisory</loc></url>
+  <url><loc>https://haleefglobal.com/services/learning-experiences</loc></url>
+  <url><loc>https://haleefglobal.com/services/technology-advisory</loc></url>
+  <url><loc>https://haleefglobal.com/training</loc></url>
+  <url><loc>https://haleefglobal.com/work</loc></url>
+  <url><loc>https://haleefglobal.com/about</loc></url>
+  <url><loc>https://haleefglobal.com/contact</loc></url>
 </urlset>

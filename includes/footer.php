@@ -2,14 +2,15 @@
 <footer class="site-footer">
     <div class="container footer-grid">
         <div>
-            <a class="brand brand-footer" href="<?= page_url() ?>"><span class="brand-arabic" lang="ar">حليف</span><span class="brand-name">HALEEF</span></a>
+            <a class="brand brand-footer" href="<?= page_url() ?>"><img src="/assets/images/haleef-logo.webp" alt="Haleef" width="180" height="82"></a>
             <p>Your strategic ally in creating events that move business forward.</p>
         </div>
         <div>
             <span class="footer-label">Explore</span>
-            <a href="services.php">What we do</a>
-            <a href="work.php">Our work</a>
-            <a href="about.php">About Haleef</a>
+            <a href="<?= page_url('services') ?>">What we do</a>
+            <a href="<?= page_url('training') ?>">Corporate training</a>
+            <a href="<?= page_url('work') ?>">Our work</a>
+            <a href="<?= page_url('about') ?>">About Haleef</a>
         </div>
         <div>
             <span class="footer-label">Connect</span>
@@ -19,14 +20,14 @@
         </div>
         <div class="footer-action">
             <span class="eyebrow">Have something in mind?</span>
-            <a class="footer-cta" href="contact.php">Let’s build the room <span>↗</span></a>
+            <a class="footer-cta" href="<?= page_url('contact') ?>">Let’s build the room <span>↗</span></a>
         </div>
     </div>
     <div class="container footer-bottom">
         <span>© <?= date('Y') ?> Haleef. All rights reserved.</span>
-        <div><a href="privacy.php">Privacy</a><a href="terms.php">Terms</a></div>
+        <div><a href="<?= page_url('privacy') ?>">Privacy</a><a href="<?= page_url('terms') ?>">Terms</a></div>
     </div>
 </footer>
-<script src="assets/js/site.js"></script>
+<script src="/assets/js/site.js"></script>
 </body>
 </html>

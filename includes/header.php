@@ -17,24 +17,24 @@ $currentPage = $currentPage ?? 'home';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/site.css">
+    <link rel="stylesheet" href="/assets/css/site.css">
 </head>
 <body class="page-<?= e($currentPage) ?>">
 <header class="site-header" data-header>
     <div class="container nav-wrap">
         <a class="brand" href="<?= page_url() ?>" aria-label="Haleef home">
-            <span class="brand-arabic" lang="ar">حليف</span>
-            <span class="brand-name">HALEEF</span>
+            <img src="/assets/images/haleef-logo.webp" alt="Haleef" width="180" height="82">
         </a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation" data-menu-toggle>
             <span></span><span></span><span></span><span class="sr-only">Menu</span>
         </button>
         <nav id="site-navigation" class="site-nav" data-menu>
-            <a href="services.php" <?= $currentPage === 'services' ? 'aria-current="page"' : '' ?>>What we do</a>
-            <a href="work.php" <?= $currentPage === 'work' ? 'aria-current="page"' : '' ?>>Our work</a>
-            <a href="about.php" <?= $currentPage === 'about' ? 'aria-current="page"' : '' ?>>About</a>
+            <a href="<?= page_url('services') ?>" <?= $currentPage === 'services' ? 'aria-current="page"' : '' ?>>What we do</a>
+            <a href="<?= page_url('training') ?>" <?= $currentPage === 'training' ? 'aria-current="page"' : '' ?>>Training</a>
+            <a href="<?= page_url('work') ?>" <?= $currentPage === 'work' ? 'aria-current="page"' : '' ?>>Our work</a>
+            <a href="<?= page_url('about') ?>" <?= $currentPage === 'about' ? 'aria-current="page"' : '' ?>>About</a>
             <a href="<?= MONEYAURA_URL ?>" target="_blank" rel="noopener">MoneyAura ↗</a>
-            <a class="button button-small" href="contact.php">Plan an event</a>
+            <a class="button button-small" href="<?= page_url('contact') ?>">Plan an event</a>
         </nav>
     </div>
 </header>

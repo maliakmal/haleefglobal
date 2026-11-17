@@ -9,7 +9,7 @@ require __DIR__ . '/includes/header.php';
 <article class="service-detail" id="<?= e($service['slug']) ?>">
     <span><?= e($service['number']) ?></span><div><h2><?= e($service['title']) ?></h2><p class="lead"><?= e($service['intro']) ?></p></div>
     <ul><?php foreach ($service['items'] as $item): ?><li><?= e($item) ?></li><?php endforeach; ?></ul>
-    <a class="circle-arrow" href="service.php?service=<?= e($service['slug']) ?>" aria-label="Learn about <?= e($service['title']) ?>">↗</a>
+    <a class="circle-arrow" href="<?= service_url($service['slug']) ?>" aria-label="Learn about <?= e($service['title']) ?>">↗</a>
 </article>
 <?php endforeach; ?>
 </div></section>
