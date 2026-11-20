@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/bootstrap.php';
+
 const SITE_NAME = 'Haleef';
 const SITE_EMAIL = 'hello@thehaleef.com';
 const LINKEDIN_URL = 'https://www.linkedin.com/company/haleefglobal/';
