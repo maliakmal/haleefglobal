@@ -5,7 +5,7 @@ DirectoryIndex index.php
     RewriteEngine On
 
     # Internal application and private-storage paths are never public.
-    RewriteRule ^(?:app|bin|database|includes|storage)/ - [F,L,NC]
+    RewriteRule ^(?:app|bin|database|deploy|docs|includes|storage)/ - [F,L,NC]
     RewriteRule (^|/)\. - [F,L]
 
     # Redirect old PHP addresses to canonical, human-readable URLs.

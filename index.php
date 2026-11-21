@@ -14,6 +14,7 @@ $pages = [
     'contact' => 'contact.php',
     'privacy' => 'privacy.php',
     'terms' => 'terms.php',
+    'health' => 'health.php',
 ];
 
 if (isset($pages[$route])) {
@@ -83,6 +84,11 @@ if (preg_match('#^admin/orders/([0-9]+)$#', $route, $matches)) {
 
 if ($route === 'admin/payment-methods') {
     require __DIR__ . '/admin/payment-methods.php';
+    exit;
+}
+
+if ($route === 'admin/resources') {
+    require __DIR__ . '/admin/resources.php';
     exit;
 }
 
