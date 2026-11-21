@@ -32,19 +32,23 @@ The database can use the MySQL/MariaDB server already supporting Sendy, but Hale
 
 ## 3. Deployment account and folders
 
-Create a dedicated account rather than deploying as root:
+Create a dedicated account and a Haleef-only group rather than deploying as root. Do not add the deployment user to `www-data`, because that group may also have access to Sendy files:
 
 ```bash
+sudo groupadd --system haleef-app
 sudo adduser --disabled-password --gecos "" haleef-deploy
-sudo usermod -aG www-data haleef-deploy
-sudo install -d -o haleef-deploy -g www-data -m 2775 /var/www/haleefglobal
-sudo install -d -o haleef-deploy -g www-data -m 2775 /var/www/haleefglobal/releases
-sudo install -d -o haleef-deploy -g www-data -m 2770 /var/www/haleefglobal/shared
-sudo install -d -o haleef-deploy -g www-data -m 2770 /var/www/haleefglobal/shared/storage/private
-sudo install -d -o haleef-deploy -g www-data -m 2775 /var/www/haleefglobal/shared/storage/logs
-sudo install -d -o haleef-deploy -g www-data -m 2775 /var/www/haleefglobal/shared/public-resources/haleef-global
-sudo install -d -o haleef-deploy -g www-data -m 2775 /var/www/haleefglobal/shared/public-resources/haleef-learning
-sudo install -d -o haleef-deploy -g www-data -m 2750 /var/www/haleefglobal/shared/backups
+sudo usermod -aG haleef-app haleef-deploy
+sudo usermod -aG haleef-app www-data
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal/releases
+sudo install -d -o haleef-deploy -g haleef-app -m 2770 /var/www/haleefglobal/shared
+sudo install -d -o haleef-deploy -g haleef-app -m 2770 /var/www/haleefglobal/shared/storage
+sudo install -d -o haleef-deploy -g haleef-app -m 2770 /var/www/haleefglobal/shared/storage/private
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal/shared/storage/logs
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal/shared/public-resources
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal/shared/public-resources/haleef-global
+sudo install -d -o haleef-deploy -g haleef-app -m 2775 /var/www/haleefglobal/shared/public-resources/haleef-learning
+sudo install -d -o haleef-deploy -g haleef-app -m 2750 /var/www/haleefglobal/shared/backups
 ```
 
 Add the deployment public key to `/home/haleef-deploy/.ssh/authorized_keys`. Keep the private key only in the GitHub production environment secret.
@@ -91,7 +95,7 @@ BACKUP_RETENTION_DAYS=14
 Protect it:
 
 ```bash
-sudo chown haleef-deploy:www-data /var/www/haleefglobal/shared/.env
+sudo chown haleef-deploy:haleef-app /var/www/haleefglobal/shared/.env
 sudo chmod 640 /var/www/haleefglobal/shared/.env
 ```
 
