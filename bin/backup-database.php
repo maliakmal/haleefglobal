@@ -36,7 +36,6 @@ $command = [
     '--user=' . $username,
     '--single-transaction',
     '--quick',
-    '--routines',
     '--triggers',
     '--default-character-set=utf8mb4',
     $database,
