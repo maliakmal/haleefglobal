@@ -1,0 +1,10 @@
+.env
+/storage/private/*
+!/storage/private/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/public-resources/*
+!/storage/public-resources/.gitkeep
+/storage/backups/*
+!/storage/backups/.gitkeep
+

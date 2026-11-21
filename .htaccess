@@ -4,6 +4,10 @@ DirectoryIndex index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Internal application and private-storage paths are never public.
+    RewriteRule ^(?:app|bin|database|deploy|docs|includes|storage)/ - [F,L,NC]
+    RewriteRule (^|/)\. - [F,L]
+
     # Redirect old PHP addresses to canonical, human-readable URLs.
     RewriteCond %{THE_REQUEST} \s/+index\.php[?\s] [NC]
     RewriteRule ^index\.php$ / [R=301,L]
@@ -18,6 +22,10 @@ DirectoryIndex index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [END,QSA]
 </IfModule>
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
 
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
