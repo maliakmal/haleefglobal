@@ -1,6 +1,6 @@
 # Haleef production deployment
 
-This deployment installs Haleef beside the existing Sendy application. Do not change Sendy's document root, database, cron jobs or Nginx server block.
+This deployment installs Haleef beside the existing Sendy application. The Droplet uses Apache with mod_php. Do not change Sendy's document root, database, cron jobs or Apache virtual hosts.
 
 ## 1. Audit the Droplet first
 
@@ -8,27 +8,24 @@ Run these read-only checks and save the output before changing the server:
 
 ```bash
 lsb_release -a
-nginx -v
 php -v
 mysql --version
-sudo nginx -T
-sudo systemctl --no-pager --full status nginx php8.3-fpm mysql
+sudo apache2ctl -S
+sudo systemctl --no-pager --full status apache2 mariadb
 sudo certbot certificates
-sudo crontab -l
 ```
 
-Confirm which PHP-FPM socket Sendy uses. The supplied Haleef Nginx template assumes `/run/php/php8.3-fpm.sock`; update it if the server uses another supported PHP version.
+The audited server currently uses Apache 2.4 with `libapache2-mod-php8.3`; Nginx and PHP-FPM are not required.
 
-Take a Sendy database dump and a copy of `/etc/nginx` before proceeding.
+Take a Sendy database dump and a copy of `/etc/apache2` before proceeding.
 
 ## 2. Required packages
 
-Install only missing packages. Haleef requires PHP 8.1+, PHP-FPM, PDO MySQL, Fileinfo, mbstring, curl, MySQL client tools, Nginx, rsync and Certbot.
+Install only missing packages. Haleef requires PHP 8.1+, PDO MySQL, Fileinfo, mbstring, curl, MySQL client tools, Apache, rsync and Certbot. The audited Droplet already has Apache, PHP 8.3, MariaDB 10.11 and all required PHP extensions.
 
 ```bash
 sudo apt update
-sudo apt install nginx rsync git mysql-client certbot python3-certbot-nginx \
-  php-fpm php-cli php-mysql php-mbstring php-curl php-xml php-zip php-gd
+sudo apt install rsync git mariadb-client certbot python3-certbot-apache
 ```
 
 The database can use the MySQL/MariaDB server already supporting Sendy, but Haleef must have a separate database and least-privilege user.
@@ -98,17 +95,18 @@ sudo chown haleef-deploy:www-data /var/www/haleefglobal/shared/.env
 sudo chmod 640 /var/www/haleefglobal/shared/.env
 ```
 
-## 6. Nginx
+## 6. Apache
 
-Copy `deploy/nginx/haleefglobal.conf` to `/etc/nginx/sites-available/haleefglobal`. Confirm the PHP-FPM socket, then enable and test it:
+Copy `deploy/apache/haleefglobal.conf` to `/etc/apache2/sites-available/haleefglobal.conf`, enable the required modules and site, then test it:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/haleefglobal /etc/nginx/sites-enabled/haleefglobal
-sudo nginx -t
-sudo systemctl reload nginx
+sudo a2enmod rewrite headers expires
+sudo a2ensite haleefglobal.conf
+sudo apache2ctl configtest
+sudo systemctl reload apache2
 ```
 
-Do not disable the Sendy site. Nginx chooses the application by `server_name`, so both applications can safely share ports 80 and 443.
+Do not disable or edit `sendy.conf`, `sendy-le-ssl.conf`, `haleeflearning.com.conf` or `haleeflearning.com-le-ssl.conf`. Apache chooses the application by `ServerName`, so these applications safely share ports 80 and 443.
 
 ## 7. GitHub production environment
 
@@ -132,7 +130,7 @@ Every push to `main` then performs:
 4. Create a compressed database backup.
 5. Apply pending migrations.
 6. Atomically switch the `current` symlink.
-7. Call `/health` through local Nginx.
+7. Call `/health` through local Apache.
 8. Roll the application symlink back if the health check fails.
 9. Keep the five newest releases.
 
@@ -170,15 +168,20 @@ Do not add AAAA records unless IPv6 is configured and tested on the Droplet fire
 
 ## 10. TLS certificates
 
-After all six hostnames resolve to the Droplet:
+After the three Haleef Global hostnames resolve to the Droplet, issue their certificate:
 
 ```bash
-sudo certbot --nginx \
+sudo certbot --apache --redirect \
   -d haleefglobal.com \
   -d www.haleefglobal.com \
-  -d haleeflearning.com \
-  -d www.haleeflearning.com \
-  -d resources.haleefglobal.com \
+  -d resources.haleefglobal.com
+```
+
+After `resources.haleeflearning.com` resolves, give that resource host its own certificate. This avoids modifying the existing Haleef Learning and Sendy certificates:
+
+```bash
+sudo certbot --apache --redirect \
+  --cert-name haleeflearning-resources \
   -d resources.haleeflearning.com
 
 sudo certbot renew --dry-run

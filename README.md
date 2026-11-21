@@ -40,7 +40,7 @@ Keep the `storage/private` directory outside the public web root where possible.
 
 The Resources screen at `/admin/resources` stores public campaign files separately for Haleef Global and Haleef Learning and generates branded URLs. In production, point `PUBLIC_STORAGE_PATH` to the shared folder outside the release directories so deployments never remove uploaded files.
 
-Production deployment assets are in `deploy/`, the GitHub Actions workflow is `.github/workflows/deploy-production.yml`, and the complete Sendy-safe server checklist is in `docs/PRODUCTION_DEPLOYMENT.md`.
+Production deployment assets are in `deploy/`, the GitHub Actions workflow is `.github/workflows/deploy-production.yml`, and the complete Apache/Sendy-safe server checklist is in `docs/PRODUCTION_DEPLOYMENT.md`.
 
 ### Nginx route and protection
 
