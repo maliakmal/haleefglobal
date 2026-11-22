@@ -126,6 +126,13 @@ grep -q 'lead@example.test' "$tmp/jobs"
 grep -q '>sent<' "$tmp/jobs"
 get admin /admin/agenda-interest >"$tmp/leads"
 [[ "$(grep -o 'lead@example.test' "$tmp/leads" | wc -l)" == 1 ]]
+grep -Fq '/admin/agenda-interest?format=csv' "$tmp/leads"
+[[ "$(status '/admin/agenda-interest?format=csv')" == 302 ]]
+curl -fsS -b "$tmp/admin" -D "$tmp/lead-headers" -o "$tmp/lead-csv" "$base/admin/agenda-interest?format=csv"
+grep -qi '^Content-Disposition: attachment; filename="agenda-interest-' "$tmp/lead-headers"
+grep -qi '^Cache-Control: private, no-store' "$tmp/lead-headers"
+grep -Fq 'Email,Programme,Edition,' "$tmp/lead-csv"
+grep -Fq 'lead@example.test,' "$tmp/lead-csv"
 get admin /admin/resources >"$tmp/resources"
 grep -q 'resources.haleeflearning.com/agendas/' "$tmp/resources"
 get visitor /training/trainers/test-trainer >"$tmp/trainer"
