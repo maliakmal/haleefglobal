@@ -20,6 +20,10 @@ done
 get() { curl -fsS -b "$tmp/$1" -c "$tmp/$1" "$base$2"; }
 csrf() { grep -o 'name="_csrf" value="[a-f0-9]*"' | sed -n '1p' | cut -d '"' -f4; }
 status() { curl -sS -o "$tmp/body" -w '%{http_code}' "$base$1"; }
+get visitor / >"$tmp/home"
+grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
+grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
+if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi
 submit() {
     local cookie=$1 path=$2 expected=$3 actual
     shift 3
@@ -126,6 +130,13 @@ grep -q 'lead@example.test' "$tmp/jobs"
 grep -q '>sent<' "$tmp/jobs"
 get admin /admin/agenda-interest >"$tmp/leads"
 [[ "$(grep -o 'lead@example.test' "$tmp/leads" | wc -l)" == 1 ]]
+grep -Fq '/admin/agenda-interest?format=csv' "$tmp/leads"
+[[ "$(status '/admin/agenda-interest?format=csv')" == 302 ]]
+curl -fsS -b "$tmp/admin" -D "$tmp/lead-headers" -o "$tmp/lead-csv" "$base/admin/agenda-interest?format=csv"
+grep -qi '^Content-Disposition: attachment; filename="agenda-interest-' "$tmp/lead-headers"
+grep -qi '^Cache-Control: private, no-store' "$tmp/lead-headers"
+grep -Fq 'Email,Programme,Edition,' "$tmp/lead-csv"
+grep -Fq 'lead@example.test,' "$tmp/lead-csv"
 get admin /admin/resources >"$tmp/resources"
 grep -q 'resources.haleeflearning.com/agendas/' "$tmp/resources"
 get visitor /training/trainers/test-trainer >"$tmp/trainer"
