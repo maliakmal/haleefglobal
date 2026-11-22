@@ -20,6 +20,10 @@ done
 get() { curl -fsS -b "$tmp/$1" -c "$tmp/$1" "$base$2"; }
 csrf() { grep -o 'name="_csrf" value="[a-f0-9]*"' | sed -n '1p' | cut -d '"' -f4; }
 status() { curl -sS -o "$tmp/body" -w '%{http_code}' "$base$1"; }
+get visitor / >"$tmp/home"
+grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
+grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
+if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi
 submit() {
     local cookie=$1 path=$2 expected=$3 actual
     shift 3

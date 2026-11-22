@@ -14,7 +14,8 @@
         </div>
         <div>
             <span class="footer-label">Connect</span>
-            <a href="mailto:<?= SITE_EMAIL ?>"><?= SITE_EMAIL ?></a>
+            <a href="mailto:team@haleefglobal.com">team@haleefglobal.com</a>
+            <a href="mailto:ask@haleeflearning.com">ask@haleeflearning.com</a>
             <a href="<?= LINKEDIN_URL ?>" target="_blank" rel="noopener">LinkedIn ↗</a>
             <span>Dubai, United Arab Emirates</span>
         </div>
