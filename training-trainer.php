@@ -47,7 +47,8 @@ require __DIR__ . '/includes/header.php';
 <?php if ($trainer): ?><div class="learning-profile">
 <?php if ($trainer['image_path']): ?><img src="<?= e($trainer['image_path']) ?>" alt=""><?php endif; ?>
 <div><span class="eyebrow">Trainer</span><h1><?= e($trainer['name']) ?></h1><p><?= e((string)$trainer['headline']) ?></p>
-<div class="learning-pills"><?php foreach (array_filter(array_map('trim',explode(',', (string)$trainer['specialties']))) as $tag): ?><span><?= e($tag) ?></span><?php endforeach; ?></div></div></div>
+<div class="learning-pills"><?php foreach (array_filter(array_map('trim',explode(',', (string)$trainer['specialties']))) as $tag): ?><span><?= e($tag) ?></span><?php endforeach; ?></div>
+<?php $trainerSocialProfile = $trainer; require __DIR__ . '/includes/trainer-linkedin.php'; ?></div></div>
 <?php else: ?><span class="eyebrow">Haleef Learning</span><h1>Meet our trainers</h1><?php endif; ?></div></section>
 <?php if ($trainer): ?><section class="container learning-sections"><article><h2>About the trainer</h2><?= Markdown::render($trainer['biography']) ?></article><article><h2>Upcoming courses</h2><div class="learning-links">
 <?php foreach ($courses as $course): ?><a href="<?= e($preview ? '/admin/preview/editions/' . $course['id'] : '/training/courses/' . $course['training_slug'] . '/' . $course['slug']) ?>"><?= e($course['title']) ?><small><?= e(Editorial::date($course,'starts_at')->format('d M Y')) ?></small></a><?php endforeach; ?>

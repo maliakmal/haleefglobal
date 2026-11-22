@@ -20,7 +20,7 @@ $currentPage = $currentPage ?? 'home';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/site.css">
-    <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=3"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
+    <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=4"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
 </head>
 <body class="page-<?= e($currentPage) ?>">
 <header class="site-header" data-header>

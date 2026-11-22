@@ -42,12 +42,27 @@
 .learning-course-copy section>div,.learning-faqs details>div{max-width:75ch;line-height:1.65}
 .learning-course-copy :is(ul,ol),.learning-faqs :is(ul,ol){padding-left:1.3rem;margin:.55rem 0}
 .learning-faqs details>div{padding-top:.65rem}
-.learning-share{background:var(--learn-soft);padding:1.25rem;border-radius:.85rem}
-.learning-share-actions{display:flex;flex-wrap:wrap;gap:.5rem}
-.learning-share-actions :is(a,button){display:inline-flex;align-items:center;min-height:44px;background:white;border:1px solid #c7b8f3;border-radius:.55rem;padding:.45rem .85rem;font:inherit;font-weight:700;color:var(--learn-purple);cursor:pointer}
+.learning-share{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem 1.25rem;background:#fff;padding:clamp(.9rem,2.3vw,1.35rem);border-radius:1rem;border:1px solid #e3dcfa;box-shadow:0 8px 32px #3924820b}
+.learning-share-heading{display:flex;align-items:center;gap:.65rem}
+.learning-share h2{margin:0;font-size:1.15rem;line-height:1.2}
+.learning-share-mark{display:grid;place-items:center;background:var(--learn-soft);border-radius:.65rem;width:2.5rem;height:2.5rem}
+.learning-share-actions{display:flex;flex-wrap:wrap;gap:.4rem}
+.learning-editorial .learning-share-actions :is(a,button){display:inline-flex;align-items:center;gap:.4rem;min-height:44px;background:#f8f6ff;border:1px solid transparent;border-radius:.65rem;padding:.45rem .7rem;font:inherit;font-size:.9rem;font-weight:700;color:var(--learn-ink);cursor:pointer;text-decoration:none}
+.learning-share-actions :is(a,button):hover{background:#eeeaff;border-color:#ded3fa}
+.learning-share-actions :is(a,button):focus-visible,.learning-trainer-social:focus-visible{outline:2px solid #674cc8;outline-offset:2px}
+.learning-share-actions svg,.learning-trainer-social svg{width:1.1rem;height:1.1rem}
+.learn-share-whatsapp svg{color:#13764a}.learn-share-linkedin svg,.learning-trainer-social svg:first-child{color:#0a66c2}.learn-share-facebook svg{color:#185cc8}
+.learning-editorial .learning-share-actions [data-copy-link]{background:var(--learn-ink);color:#fff}
+.learning-share-actions [data-copy-link] svg{color:#fff}
 .learning-share [hidden]{display:none}
+.learning-editorial .learning-share-actions button[hidden]{display:none}
 .learning-share input{width:min(100%,34rem);margin-top:.5rem;font:inherit}
-.learning-share [role=status]{display:block;margin-top:.3rem}
+.learning-share [role=status]:not(:empty){flex-basis:100%;font-size:.875rem}
+.learning-trainer-actions{display:flex;align-items:center;flex-wrap:wrap;gap:.2rem .85rem}
+.learning-trainer-social{display:inline-flex;align-items:center;gap:.4rem;min-height:44px;font-weight:700;text-decoration:none}
+.learning-trainer-social svg:last-child{width:.85rem;height:.85rem}
+.learning-profile .learning-trainer-social{margin-top:.65rem}
+.learning-trainers{grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr))}
 .learning-editorial{letter-spacing:.012em}
 .learning-editorial h1{letter-spacing:-.025em;line-height:1.09;margin-block:.7rem 1.35rem}
 .learning-editorial h2,.learning-editorial h3{letter-spacing:-.013em}
