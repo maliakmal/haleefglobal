@@ -48,7 +48,7 @@ require __DIR__ . '/includes/header.php';
                         <h3><?= e($course['title']) ?></h3>
                         <p><?= e((string) $course['short_description']) ?></p>
                     </div>
-                    <div class="course-card-action"><span><?= e($course['currency']) ?> <?= e(number_format((float) $course['price'], 2)) ?></span><a class="button button-dark" href="/training/courses/<?= e($course['training_slug'] . '/' . $course['edition_slug']) ?>">View edition</a></div>
+                    <div class="course-card-action"><span><?= e(\Haleef\Support\MoneyDisplay::format((float) $course['price'], $course['currency'])) ?></span><a class="button button-dark" href="/training/courses/<?= e($course['training_slug'] . '/' . $course['edition_slug']) ?>">View edition</a></div>
                 </article>
             <?php endforeach; ?>
         </div>
