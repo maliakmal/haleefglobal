@@ -16,11 +16,11 @@ final class TrainingRepository
              FROM training_editions e
              INNER JOIN trainings t ON t.id = e.training_id
              INNER JOIN brands b ON b.id = t.brand_id
-             WHERE b.code = ? AND t.status = 'published' AND e.ends_at >= NOW()
+             WHERE b.code = ? AND t.status = 'published' AND e.publication_status = 'published'
              ORDER BY e.starts_at ASC"
         );
         $statement->execute([$brandCode]);
-        return $statement->fetchAll();
+        return array_values(array_filter($statement->fetchAll(), static fn($edition) => !Editorial::ended($edition)));
     }
 
     public function past(string $brandCode = 'haleef-learning'): array
@@ -32,11 +32,11 @@ final class TrainingRepository
              FROM training_editions e
              INNER JOIN trainings t ON t.id = e.training_id
              INNER JOIN brands b ON b.id = t.brand_id
-             WHERE b.code = ? AND t.status = 'published' AND e.ends_at < NOW()
+             WHERE b.code = ? AND t.status = 'published' AND e.publication_status = 'published'
              ORDER BY e.starts_at DESC"
         );
         $statement->execute([$brandCode]);
-        return $statement->fetchAll();
+        return array_values(array_filter($statement->fetchAll(), [Editorial::class, 'ended']));
     }
 
     public function findPublished(string $trainingSlug, string $brandCode = 'haleef-learning'): ?array
@@ -53,7 +53,9 @@ final class TrainingRepository
         }
 
         $editions = Database::connection()->prepare(
-            'SELECT * FROM training_editions WHERE training_id = ? ORDER BY starts_at ASC'
+            "SELECT id, slug, starts_at, ends_at, timezone, venue_name, venue_address, delivery_mode, price, currency,
+                    cpd_points, registration_status, image_path, features, agenda_asset_id
+             FROM training_editions WHERE training_id = ? AND publication_status='published' ORDER BY starts_at ASC"
         );
         $editions->execute([$training['id']]);
         $training['editions'] = $editions->fetchAll();
@@ -68,11 +70,11 @@ final class TrainingRepository
              FROM training_editions e
              INNER JOIN trainings t ON t.id = e.training_id
              INNER JOIN brands b ON b.id = t.brand_id
-             WHERE e.slug = ? AND e.registration_status = 'open' AND t.status = 'published' LIMIT 1"
+             WHERE e.slug = ? AND e.registration_status = 'open' AND e.publication_status = 'published' AND t.status = 'published' LIMIT 1"
         );
         $statement->execute([$editionSlug]);
         $edition = $statement->fetch();
-        return $edition ?: null;
+        return $edition && !Editorial::ended($edition) ? $edition : null;
     }
 }
 

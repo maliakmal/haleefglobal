@@ -10,6 +10,7 @@ $pages = [
     'services' => 'services.php',
     'training' => 'training.php',
     'training/courses' => 'training-courses.php',
+    'training/trainers' => 'training-trainer.php',
     'work' => 'work.php',
     'contact' => 'contact.php',
     'privacy' => 'privacy.php',
@@ -28,9 +29,23 @@ if (preg_match('#^services/([a-z0-9-]+)$#', $route, $matches)) {
     exit;
 }
 
-if (preg_match('#^training/courses/([a-z0-9-]+)$#', $route, $matches)) {
+if (preg_match('#^training/courses/([a-z0-9-]+)(?:/([a-z0-9-]+))?$#', $route, $matches)) {
     $_GET['training'] = $matches[1];
+    $_GET['edition'] = $matches[2] ?? '';
     require __DIR__ . '/training-course.php';
+    exit;
+}
+
+if (preg_match('#^training/trainers/([a-z0-9-]+)$#', $route, $matches)) {
+    $_GET['trainer'] = $matches[1];
+    require __DIR__ . '/training-trainer.php';
+    exit;
+}
+
+if (preg_match('#^admin/preview/(trainings|editions|trainers)/([1-9][0-9]*)$#', $route, $matches)) {
+    $previewKind = $matches[1];
+    $previewId = (int) $matches[2];
+    require __DIR__ . ($previewKind === 'trainers' ? '/training-trainer.php' : '/training-course.php');
     exit;
 }
 
@@ -61,13 +76,16 @@ if ($route === 'admin') {
     exit;
 }
 
-if ($route === 'admin/trainings') {
-    require __DIR__ . '/admin/trainings.php';
+if (preg_match('#^admin/(trainings|editions|trainers)(?:/(new|[1-9][0-9]*/edit))?$#', $route, $matches)) {
+    $editorKind = $matches[1];
+    $editorNew = ($matches[2] ?? '') === 'new';
+    $editorId = (int) ($matches[2] ?? 0);
+    require __DIR__ . '/admin/learning-editor.php';
     exit;
 }
 
-if ($route === 'admin/editions') {
-    require __DIR__ . '/admin/editions.php';
+if ($route === 'admin/agenda-interest') {
+    require __DIR__ . '/admin/agenda-interest.php';
     exit;
 }
 
