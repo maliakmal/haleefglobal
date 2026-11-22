@@ -19,11 +19,11 @@ $currentPage = $currentPage ?? 'home';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/site.css">
+    <link rel="stylesheet" href="/assets/css/site.css?v=2">
     <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=6"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
 </head>
 <body class="page-<?= e($currentPage) ?>">
-<header class="site-header" data-header>
+<header class="site-header<?= !empty($solidHeader) ? ' site-header-solid' : '' ?>" data-header>
     <div class="container nav-wrap">
         <a class="brand" href="<?= page_url() ?>" aria-label="Haleef home">
             <img src="/assets/images/haleef-logo.webp" alt="Haleef" width="180" height="82">

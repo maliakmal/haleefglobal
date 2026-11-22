@@ -29,6 +29,7 @@
         <div><a href="<?= page_url('privacy') ?>">Privacy</a><a href="<?= page_url('terms') ?>">Terms</a></div>
     </div>
 </footer>
+<?php require __DIR__ . '/whatsapp-widget.php'; ?>
 <script src="/assets/js/site.js"></script>
 </body>
 </html>

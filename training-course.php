@@ -50,6 +50,7 @@ $agendaReturn = $courseUrl . ($edition ? '/' . $edition['slug'] : '');
 $pageTitle = $training['title'];
 $pageDescription = $training['short_description'] ?: 'Haleef Learning professional training programme.';
 $currentPage = 'training';
+$solidHeader = true;
 $headerImage = ($edition['image_path'] ?? '') ?: $training['image_path'];
 if (!$preview) {
     $shareUrl = rtrim(Env::get('APP_URL') ?: 'https://www.haleefglobal.com', '/') . $courseUrl . ($edition ? '/' . $edition['slug'] : '');

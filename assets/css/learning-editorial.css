@@ -142,3 +142,7 @@
 .training-hero-actions .training-agenda-cta{background:transparent;border:1px solid #b2a2ff;color:#fff}
 .training-hero-actions .training-agenda-cta:hover{background:#eeeaff;color:#15143d}
 .training-hero-actions .training-agenda-cta:focus-visible{outline:2px solid #9debf7;outline-offset:4px}
+.site-header-solid:not(.is-scrolled){background:#111136}
+.site-header-solid + main .learning-hero{padding-top:clamp(7rem,12vw,9.5rem)}
+.site-header-solid + main .learning-preview{padding-top:6.5rem}
+.site-header-solid + main .learning-preview + .learning-hero{padding-top:clamp(2.2rem,5vw,5rem)}

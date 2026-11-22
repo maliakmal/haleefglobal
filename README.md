@@ -4,6 +4,8 @@ A lightweight, reusable PHP website for Haleef.
 
 ## Run locally
 
+To enable the floating WhatsApp contact button, set `WHATSAPP_NUMBER` in `.env` (on production, edit the shared `/var/www/haleefglobal/shared/.env`). Use the full international number with country code, digits only. Leave it blank to hide the button. The configured number is public in the WhatsApp link.
+
 ```bash
 php -S localhost:8000 router.php
 ```

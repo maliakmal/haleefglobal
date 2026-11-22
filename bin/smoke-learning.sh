@@ -24,6 +24,13 @@ get visitor / >"$tmp/home"
 grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
 grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
 if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi
+if grep -Fq 'class="whatsapp-contact"' "$tmp/home"; then exit 1; fi
+printf 'WHATSAPP_NUMBER=12025550123\n' >"$tmp/whatsapp.env"
+WHATSAPP_NUMBER=12025550124 php -r 'require "app/Autoload.php"; Haleef\Support\Env::load($argv[1]); require "includes/config.php"; require "includes/whatsapp-widget.php";' "$tmp/whatsapp.env" >"$tmp/widget"
+grep -Fq 'href="https://wa.me/12025550123"' "$tmp/widget"
+printf 'WHATSAPP_NUMBER=+invalid\n' >"$tmp/whatsapp.env"
+php -r 'require "app/Autoload.php"; Haleef\Support\Env::load($argv[1]); require "includes/config.php"; require "includes/whatsapp-widget.php";' "$tmp/whatsapp.env" >"$tmp/widget"
+test ! -s "$tmp/widget"
 get visitor /training >"$tmp/no-agenda"
 if grep -Fq 'href="#agenda"' "$tmp/no-agenda"; then exit 1; fi
 submit() {
@@ -144,6 +151,7 @@ grep -Fq 'lead@example.test,' "$tmp/lead-csv"
 get admin /admin/resources >"$tmp/resources"
 grep -q 'resources.haleeflearning.com/agendas/' "$tmp/resources"
 get visitor /training/trainers/test-trainer >"$tmp/trainer"
+grep -Fq 'class="site-header site-header-solid"' "$tmp/trainer"
 grep -q "$path" "$tmp/trainer"
 grep -q 'Share this speaker' "$tmp/trainer"
 grep -q 'www.linkedin.com/sharing/share-offsite' "$tmp/trainer"
