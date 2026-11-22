@@ -33,6 +33,7 @@ if ($preview || $slug !== '') {
 }
 $pageTitle = $trainer ? $trainer['name'] : 'Haleef Learning trainers';
 $currentPage = 'training';
+$solidHeader = true;
 if ($trainer && !$preview) {
     $shareUrl = rtrim(\Haleef\Support\Env::get('APP_URL') ?: 'https://www.haleefglobal.com', '/') . '/training/trainers/' . $trainer['slug'];
     $shareImage = $trainer['image_path'];
