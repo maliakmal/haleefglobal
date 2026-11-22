@@ -153,7 +153,7 @@ $area = static function (string $key, string $label) use ($value): void { ?><lab
 $select = static function (string $key, string $label, array $options, string $default) use ($value): void { ?><label><?= e($label) ?><select required name="<?= e($key) ?>"><?php foreach ($options as $k=>$v): ?><option value="<?= e((string)$k) ?>" <?= $value($key,$default)===(string)$k?'selected':'' ?>><?= e((string)$v) ?></option><?php endforeach; ?></select></label><?php };
 $check = static function (string $key, string $label) use ($row): void { ?><label class="check-label"><input type="checkbox" name="<?= e($key) ?>" <?= (($_SERVER['REQUEST_METHOD']==='POST' ? isset($_POST[$key]) : !empty($row[$key])))?'checked':'' ?>><?= e($label) ?></label><?php };
 ?>
-<section class="admin-panel admin-form-panel"><div class="panel-heading"><a href="<?= e($base) ?>">Back to list</a><?php if ($id): ?><a href="<?= e($preview($id)) ?>" target="_blank" rel="noopener">Preview saved version</a><?php endif; ?></div>
+<section class="admin-panel admin-form-panel"><div class="panel-heading"><a href="<?= e($base) ?>">Back to list</a><?php if ($id): ?><div><?php if ($kind === 'editions'): ?><a href="/admin/editions/<?= $id ?>/faqs">Manage edition FAQs</a> · <?php endif; ?><a href="<?= e($preview($id)) ?>" target="_blank" rel="noopener">Preview saved version</a></div><?php endif; ?></div>
 <?php if ($error): ?><div class="admin-alert admin-alert-error"><?= e($error) ?></div><?php endif; ?>
 <form method="post" enctype="multipart/form-data"><?= Csrf::field() ?>
 <?php if ($kind === 'trainings'):

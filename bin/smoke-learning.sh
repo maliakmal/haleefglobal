@@ -38,7 +38,7 @@ submit admin /admin/trainings/new 303 -F "_csrf=$token" -F 'title=Advanced Learn
 get admin /admin/preview/trainings/1 >"$tmp/preview"
 grep -q '<strong>Practical overview</strong>' "$tmp/preview"
 get admin /admin/trainings/1/edit >/dev/null
-submit admin /admin/trainings/1/edit 303 -F "_csrf=$token" -F 'title=Advanced Learning Updated' -F 'slug=advanced-learning' -F 'status=published'
+submit admin /admin/trainings/1/edit 303 -F "_csrf=$token" -F 'title=Advanced Learning Updated' -F 'slug=advanced-learning' -F 'status=published' -F 'description=Practical overview' -F 'audience=Clinical researchers' -F 'learning_outcomes=Applied methods'
 submit admin /admin/trainers/new 303 -F "_csrf=$token" -F 'name=Test Trainer' -F 'is_published=1'
 edition=(-F "_csrf=$token" -F 'slug=advanced-learning-2035' -F 'training_id=1' -F 'starts_at=2035-02-23T10:00'
     -F 'ends_at=2035-02-25T14:00' -F 'timezone=Europe/Paris' -F 'delivery_mode=online' -F 'registration_status=open'
@@ -54,8 +54,32 @@ grep -q 'Download form disabled in preview' "$tmp/preview"
 grep -q 'Test Trainer' "$tmp/preview"
 grep -q 'haleef-learning\|resources.haleeflearning.com' "$tmp/preview"
 ! grep -q 'zoom.us/j/' "$tmp/preview" || exit 1
+! grep -q 'data-learning-share' "$tmp/preview" || exit 1
+grep -q 'How do I book and confirm my place?' "$tmp/preview"
+[[ "$(status /admin/faqs)" == 302 ]]
+get admin /admin/faqs >"$tmp/library"
+grep -q 'Reusable FAQs' "$tmp/library"
+submit admin /admin/faqs 303 -d "_csrf=$token&id=0&action=library&question=Library+question&answer=Library+answer&enabled=1"
+get admin /admin/editions/1/faqs >"$tmp/faq"
+grep -q 'Library question' "$tmp/faq"
+submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=1&action=shared&enabled=1&question=Edition+date+question&answer=**Edition+answer**"
+submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=2&action=shared"
+submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=0&action=custom&enabled=1&question=Local+question&answer=Local+answer"
+submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=shared"
+submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=inherit"
 submit admin /admin/editions/1/edit 303 "${edition[@]}" -F 'publication_status=published'
 get visitor "$path" >"$tmp/page"
+grep -q '<section id="overview"' "$tmp/page"
+grep -q '<section id="audience"' "$tmp/page"
+grep -q '<section id="outcomes"' "$tmp/page"
+grep -q 'Edition date question' "$tmp/page"
+grep -q '<strong>Edition answer</strong>' "$tmp/page"
+grep -q 'Local question' "$tmp/page"
+grep -q 'Library question' "$tmp/page"
+grep -q 'Where do I find the joining instructions?' "$tmp/page"
+! grep -q 'How do I book and confirm my place?' "$tmp/page" || exit 1
+grep -q "rel=\"canonical\" href=\"https://www.haleefglobal.com$path\"" "$tmp/page"
+grep -q 'data-learning-share' "$tmp/page"
 grep -q 'Interactive sessions' "$tmp/page"
 grep -q 'Get the agenda' "$tmp/page"
 ! grep -q 'zoom.us/j/\|/agendas/' "$tmp/page" || exit 1
@@ -70,6 +94,8 @@ get admin /admin/resources >"$tmp/resources"
 grep -q 'resources.haleeflearning.com/agendas/' "$tmp/resources"
 get visitor /training/trainers/test-trainer >"$tmp/trainer"
 grep -q "$path" "$tmp/trainer"
+grep -q 'Share this speaker' "$tmp/trainer"
+grep -q 'www.linkedin.com/sharing/share-offsite' "$tmp/trainer"
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=TestBank&iban=TEST"
 submit visitor /training/register/advanced-learning-2035 302 -d "_csrf=$visitor&name=TestAttendee&email=attendee@example.test&payment_method=bank_transfer"
 booking="$(awk 'tolower($1)=="location:" {gsub(/\r/,"",$2);print $2}' "$tmp/headers")"

@@ -46,6 +46,8 @@ Set the edition's Zoom **attendee** link in the edition editor (never enter a ho
 
 An edition agenda upload is listed in **Resources** under Haleef Learning. Its landing page asks for an email and then sends the visitor to the same public file. The public campaign URL can be shared independently and does not capture leads. View recorded requests under **Agenda interest**. Repeated requests for the same edition/file/email update the latest timestamp; do not use the download request as email marketing consent.
 
+Use **FAQ Library** to manage reusable FAQs and choose which appear by default. **Editions → Edit → Manage edition FAQs** controls what appears on one edition, including overrides, edition-only questions, and display order (lower numbers first). Empty overrides inherit the library content; **Reset to library defaults** restores both content and default visibility.
+
 Production deployment assets are in `deploy/`, the GitHub Actions workflow is `.github/workflows/deploy-production.yml`, and the complete Apache/Sendy-safe server checklist is in `docs/PRODUCTION_DEPLOYMENT.md`.
 
 ### Nginx route and protection

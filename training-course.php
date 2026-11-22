@@ -3,8 +3,8 @@ declare(strict_types=1);
 require __DIR__ . '/includes/config.php';
 
 use Haleef\Admin\AdminAuth;
-use Haleef\Support\{Csrf, Database};
-use Haleef\Training\{Editorial, Markdown, TrainingRepository};
+use Haleef\Support\{Csrf, Database, Env};
+use Haleef\Training\{Editorial, Faqs, Markdown, TrainingRepository};
 
 $preview = isset($previewId);
 if ($preview) AdminAuth::requireUser();
@@ -67,6 +67,12 @@ $pageTitle = $training['title'];
 $pageDescription = $training['short_description'] ?: 'Haleef Learning professional training programme.';
 $currentPage = 'training';
 $headerImage = ($edition['image_path'] ?? '') ?: $training['image_path'];
+if (!$preview) {
+    $shareUrl = rtrim(Env::get('APP_URL') ?: 'https://www.haleefglobal.com', '/') . $courseUrl . ($edition ? '/' . $edition['slug'] : '');
+    $shareImage = $headerImage;
+    $shareHeading = $edition ? 'Share this edition' : 'Share this programme';
+}
+$editionFaqs = $edition ? (new Faqs($pdo))->visible((int)$edition['id']) : [];
 $format = ['online'=>'Live online training','in_person'=>'In-person training','hybrid'=>'Hybrid training'];
 $icon = static function (string $key): string {
     $p = ['video'=>'<rect x="2" y="5" width="14" height="14" rx="2"/><path d="m16 10 6-4v12l-6-4"/>',
@@ -96,15 +102,16 @@ require __DIR__ . '/includes/header.php';
 $highlights = [$edition['delivery_mode'] === 'in_person' ? ['pin','In person','Attend at the venue.'] : ['video',$format[$edition['delivery_mode']],$edition['delivery_mode']==='hybrid' ? 'Join online or at the venue.' : 'Join the instructor live online.']];
 foreach ((json_decode((string)$edition['features'],true) ?: []) as $feature) if (isset(Editorial::FEATURES[$feature])) $highlights[] = Editorial::FEATURES[$feature];
 ?><div class="container learning-highlights"><?php foreach ($highlights as [$symbol,$title,$copy]): ?><div><?= $icon($symbol) ?><div><strong><?= e($title) ?></strong><p><?= e($copy) ?></p></div></div><?php endforeach; ?></div><?php endif; ?>
-<section class="container learning-sections"><?php foreach (['description'=>'Overview','audience'=>'Who should attend','learning_outcomes'=>'Learning outcomes','key_notes'=>'Key notes'] as $col=>$heading): if (!empty($training[$col])): ?><article><h2><?= e($heading) ?></h2><?= Markdown::render($training[$col]) ?></article><?php endif; endforeach; ?></section>
+<div class="container learning-course-copy"><?php foreach (['description'=>['overview','Overview'],'audience'=>['audience','Who should attend'],'learning_outcomes'=>['outcomes','Learning outcomes'],'key_notes'=>['notes','Key notes']] as $col=>[$sectionId,$heading]): if (!empty($training[$col])): ?><section id="<?= e($sectionId) ?>" aria-labelledby="<?= e($sectionId) ?>-heading"><h2 id="<?= e($sectionId) ?>-heading"><?= e($heading) ?></h2><div><?= Markdown::render($training[$col]) ?></div></section><?php endif; endforeach; ?></div>
 <?php if (!$edition): ?><section class="container learning-band"><h2>Scheduled editions</h2><?php if (!$editions): ?><p>No editions scheduled yet.</p><?php endif; ?><div class="learning-links"><?php foreach ($editions as $item): ?><a href="<?= e($preview ? '/admin/preview/editions/' . $item['id'] : $courseUrl . '/' . $item['slug']) ?>"><?= e(Editorial::date($item,'starts_at')->format('d M Y') . ' · ' . $format[$item['delivery_mode']]) ?></a><?php endforeach; ?></div></section><?php endif; ?>
 <?php if ($trainers): ?><section class="container learning-band"><h2>Meet your <?= count($trainers) > 1 ? 'trainers' : 'trainer' ?></h2><div class="learning-trainers"><?php foreach ($trainers as $tr): ?><article>
 <?php if ($tr['image_path']): ?><img src="<?= e($tr['image_path']) ?>" alt=""><?php endif; ?><div><h3><?= e($tr['name']) ?></h3><p><?= e((string)$tr['headline']) ?></p><a href="<?= e($preview ? '/admin/preview/trainers/' . $tr['id'] : '/training/trainers/' . $tr['slug']) ?>">View trainer profile</a></div></article><?php endforeach; ?></div></section><?php endif; ?>
 <?php if ($agenda): ?><section id="agenda" class="container learning-band"><div class="learning-agenda"><div><?= $icon('document') ?><h2>Download the agenda</h2><p>Enter your email to get the full PDF. We’ll record your interest in this edition.</p><a href="/privacy">Privacy policy</a></div>
 <?php if ($preview): ?><p>Download form disabled in preview.</p><?php else: ?><form method="post"><?= Csrf::field() ?><?php if ($error): ?><p role="alert"><?= e($error) ?></p><?php endif; ?><label for="agenda-email">Email address</label><input id="agenda-email" name="email" type="email" autocomplete="email" maxlength="254" required><label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><button class="learning-action" type="submit">Get the agenda</button></form><?php endif; ?></div></section><?php endif; ?>
-<section class="container learning-band"><h2>Frequently asked questions</h2>
-<?php if ($edition): ?><details><summary>How is this edition delivered?</summary><p><?= e($format[$edition['delivery_mode']]) ?>. <?= e((string)$edition['venue_address']) ?></p></details><?php endif; ?>
-<details><summary>Can you run this in-house?</summary><p><a href="/contact?interest=corporate-training">Ask about training for your team.</a></p></details></section>
+<?php if ($editionFaqs): ?><section class="container learning-band learning-faqs" aria-labelledby="edition-faq-title"><h2 id="edition-faq-title">Frequently asked questions</h2>
+<?php foreach ($editionFaqs as $faq): ?><details><summary><?= e($faq['question']) ?></summary><div><?= Markdown::render($faq['answer']) ?></div></details><?php endforeach; ?></section>
+<?php elseif (!$edition): ?><section class="container learning-band"><h2>Training for your team</h2><p><a href="/contact?interest=corporate-training">Ask about a private edition.</a></p></section><?php endif; ?>
+<?php if (!$preview): ?><div class="container learning-band"><?php require __DIR__ . '/includes/learning-share.php'; ?></div><?php endif; ?>
 <?php if ($canBook && !$preview): ?><section class="learning-final"><h2>Secure your place</h2><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a></section><?php endif; ?>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>
