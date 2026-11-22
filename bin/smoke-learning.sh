@@ -7,6 +7,7 @@ base=http://127.0.0.1:8097
 export PUBLIC_STORAGE_PATH="$tmp/public" PRIVATE_STORAGE_PATH="$tmp/private"
 php bin/migrate.php
 php bin/migrate.php
+php -r 'require "includes/bootstrap.php"; use Haleef\Support\MoneyDisplay; foreach ([["USD",10,"US$10.00"],["EUR",1199,"€1,199.00"],["GBP",-1.5,"-£1.50"],["AED",120,"120.00\u{00A0}\u{2067}د.إ\u{2069}"],["CHF",10,"CHF 10.00"]] as [$code,$amount,$expected]) { if (MoneyDisplay::format($amount,$code) !== $expected) throw new RuntimeException("Wrong display for $code"); }'
 php -r 'require "includes/bootstrap.php"; $html=Haleef\Training\Markdown::render("**safe**\n\n- <img src=x>\n- [unsafe](javascript:alert(1))"); if (!str_contains($html,"<strong>safe</strong>") || !str_contains($html,"<ul>") || str_contains($html,"<img") || str_contains($html,"href=")) exit(1);'
 php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->prepare("INSERT INTO admin_users(name,email,password_hash,role) VALUES (?,?,?,?)")->execute(["Smoke","operator@example.test",password_hash("smoke-only-password",PASSWORD_DEFAULT),"administrator"]);'
 AGENDA_EMAIL_ENABLED=1 BREVO_API_KEY=smoke-never-sent AGENDA_EMAIL_FROM=sender@example.test php -S 127.0.0.1:8097 router.php >"$tmp/server.log" 2>&1 &
@@ -80,6 +81,7 @@ submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=shared"
 submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=inherit"
 submit admin /admin/editions/1/edit 303 "${edition[@]}" -F 'publication_status=published'
 get visitor "$path" >"$tmp/page"
+grep -Fq '€1,199.00' "$tmp/page"
 grep -q 'Meet your trainers' "$tmp/page"
 grep -q 'Second Instructor' "$tmp/page"
 grep -q 'href="https://www.linkedin.com/in/test-trainer/"' "$tmp/page"
@@ -109,6 +111,7 @@ get visitor /training >"$tmp/training"
 grep -q 'Request the agenda' "$tmp/training"
 get visitor /training/courses >"$tmp/calendar"
 grep -q 'Request the agenda' "$tmp/calendar"
+grep -Fq '€1,199.00' "$tmp/calendar"
 for i in 1 2; do
     submit visitor /training/agenda-request 303 -d "_csrf=$visitor&email=lead@example.test&edition_id=1&return_path=$path"
     grep -qi "^Location: $path#agenda" "$tmp/headers"
@@ -129,10 +132,13 @@ grep -q 'Share this speaker' "$tmp/trainer"
 grep -q 'www.linkedin.com/sharing/share-offsite' "$tmp/trainer"
 grep -q 'class="learning-trainer-social" href="https://www.linkedin.com/in/test-trainer/"' "$tmp/trainer"
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=TestBank&iban=TEST"
+get visitor /training/register/advanced-learning-2035 >"$tmp/register"
+grep -Fq '€1,199.00' "$tmp/register"
 submit visitor /training/register/advanced-learning-2035 302 -d "_csrf=$visitor&name=TestAttendee&email=attendee@example.test&payment_method=bank_transfer"
 booking="$(awk 'tolower($1)=="location:" {gsub(/\r/,"",$2);print $2}' "$tmp/headers")"
 [[ "$booking" == /training/booking/* ]]
 get visitor "$booking" >"$tmp/booking"
+grep -Fq '€1,199.00' "$tmp/booking"
 ! grep -q 'zoom.us/j/' "$tmp/booking" || exit 1
 submit admin /admin/orders/1 302 -F "_csrf=$token" -F 'reference=SMOKE' -F 'amount=1199' -F "evidence=@$tmp/agenda.pdf"
 get visitor "$booking" >"$tmp/booking"

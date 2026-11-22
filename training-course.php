@@ -75,7 +75,7 @@ require __DIR__ . '/includes/header.php';
 <?php if ($headerImage): ?><img class="learning-hero-art" src="<?= e($headerImage) ?>" alt=""><?php endif; ?>
 <div class="container learning-hero-layout"><div><nav class="learning-crumb"><a href="/training/courses">Courses</a> / <a href="/training/trainers">Trainers</a></nav>
 <span class="eyebrow"><?= e($edition ? $format[$edition['delivery_mode']] : 'Haleef Learning programme') ?></span><h1><?= e($training['title']) ?></h1><p><?= e((string)$training['short_description']) ?></p><?php if ($agendaOptions): ?><a class="learning-agenda-jump" href="#agenda">Request the agenda</a><?php endif; ?></div>
-<?php if ($edition): ?><aside class="learning-booking"><strong><?= e($details) ?></strong><span><?= e($edition['timezone']) ?></span><span><?= e($edition['venue_name'] ?: $format[$edition['delivery_mode']]) ?></span><b><?= e($edition['currency']) ?> <?= e(number_format((float)$edition['price'],2)) ?></b>
+<?php if ($edition): ?><aside class="learning-booking"><strong><?= e($details) ?></strong><span><?= e($edition['timezone']) ?></span><span><?= e($edition['venue_name'] ?: $format[$edition['delivery_mode']]) ?></span><b><?= e(\Haleef\Support\MoneyDisplay::format((float)$edition['price'], $edition['currency'])) ?></b>
 <?php if ($training['cpd_available'] && $edition['cpd_points'] !== null): ?><span><?= e((string)$edition['cpd_points']) ?> CPD points</span><?php endif; ?>
 <?php if ($canBook && !$preview): ?><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a>
 <?php elseif ($preview): ?><span>Booking disabled in preview</span>
