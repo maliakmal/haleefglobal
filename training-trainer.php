@@ -33,6 +33,12 @@ if ($preview || $slug !== '') {
 }
 $pageTitle = $trainer ? $trainer['name'] : 'Haleef Learning trainers';
 $currentPage = 'training';
+if ($trainer && !$preview) {
+    $shareUrl = rtrim(\Haleef\Support\Env::get('APP_URL') ?: 'https://www.haleefglobal.com', '/') . '/training/trainers/' . $trainer['slug'];
+    $shareImage = $trainer['image_path'];
+    $shareHeading = 'Share this speaker';
+    if (!empty($trainer['headline'])) $pageDescription = $trainer['headline'];
+}
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="learning-editorial">
@@ -47,5 +53,6 @@ require __DIR__ . '/includes/header.php';
 <?php foreach ($courses as $course): ?><a href="<?= e($preview ? '/admin/preview/editions/' . $course['id'] : '/training/courses/' . $course['training_slug'] . '/' . $course['slug']) ?>"><?= e($course['title']) ?><small><?= e(Editorial::date($course,'starts_at')->format('d M Y')) ?></small></a><?php endforeach; ?>
 <?php if (!$courses): ?><p>No upcoming editions listed.</p><?php endif; ?></div></article></section>
 <?php else: ?><section class="container learning-band"><div class="learning-trainers"><?php foreach ($trainers as $tr): ?><article><?php if ($tr['image_path']): ?><img src="<?= e($tr['image_path']) ?>" alt=""><?php endif; ?><div><h2><?= e($tr['name']) ?></h2><p><?= e((string)$tr['headline']) ?></p><a href="/training/trainers/<?= e($tr['slug']) ?>">View profile</a></div></article><?php endforeach; ?></div><?php if (!$trainers): ?><p>Trainer profiles are coming soon.</p><?php endif; ?></section><?php endif; ?>
+<?php if ($trainer && !$preview): ?><div class="container learning-band"><?php require __DIR__ . '/includes/learning-share.php'; ?></div><?php endif; ?>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

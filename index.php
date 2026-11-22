@@ -84,6 +84,12 @@ if (preg_match('#^admin/(trainings|editions|trainers)(?:/(new|[1-9][0-9]*/edit))
     exit;
 }
 
+if ($route === 'admin/faqs' || preg_match('#^admin/editions/([1-9][0-9]*)/faqs$#', $route, $faqMatches)) {
+    $faqEditionId = (int) ($faqMatches[1] ?? 0);
+    require __DIR__ . '/admin/learning-faqs.php';
+    exit;
+}
+
 if ($route === 'admin/agenda-interest') {
     require __DIR__ . '/admin/agenda-interest.php';
     exit;
