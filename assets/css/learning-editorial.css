@@ -130,3 +130,15 @@
 .delegate-totals p{font-size:.9rem;color:#575270;margin:.9rem 0 0}
 @media(max-width:820px){.delegate-form,.learning-final-layout{grid-template-columns:1fr}.delegate-totals{position:static}}
 @media(max-width:480px){.delegate-fields{grid-template-columns:1fr}}
+
+.learning-trainer-company{background:linear-gradient(115deg,#f0ebff,#fbf9ff);border-block:1px solid #e5dcfa}
+.learning-trainer-company-inner{display:flex;align-items:center;flex-wrap:wrap;gap:1.15rem 1.9rem;padding-block:clamp(1.5rem,3.5vw,2.65rem)}
+.learning-company-logo{display:grid;place-items:center;width:clamp(6rem,15vw,10rem);min-height:5rem;padding:.8rem;background:#fff;border:1px solid #e3daf6;border-radius:.8rem}
+.learning-company-logo img{max-height:4.3rem;width:100%;object-fit:contain}
+.learning-company-copy{flex:1 1 17rem;min-width:0}
+.learning-company-copy .eyebrow{color:#5140a1;margin-bottom:.4rem}
+.learning-company-copy h2{font-size:clamp(1.5rem,3.2vw,2.2rem);margin:0;overflow-wrap:anywhere}
+.learning-company-copy p{max-width:65ch;margin:.55rem 0 0;white-space:pre-line;overflow-wrap:anywhere}
+.training-hero-actions .training-agenda-cta{background:transparent;border:1px solid #b2a2ff;color:#fff}
+.training-hero-actions .training-agenda-cta:hover{background:#eeeaff;color:#15143d}
+.training-hero-actions .training-agenda-cta:focus-visible{outline:2px solid #9debf7;outline-offset:4px}

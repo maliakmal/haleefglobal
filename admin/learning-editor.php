@@ -72,6 +72,17 @@ if ($editing && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $data['linkedin_url'] = $profileUrl;
                 }
             }
+            if (array_key_exists('company_name', $_POST)) {
+                $company = $p('company_name');
+                $about = $p('company_about');
+                $showcase = isset($_POST['company_showcase_enabled']);
+                if (($showcase && $company === '') || mb_strlen($company) > 160 || mb_strlen($about) > 600) {
+                    throw new RuntimeException('Enter a company name to show the company section. Keep the name under 160 characters and the blurb under 600.');
+                }
+                $data['company_showcase_enabled'] = (int)$showcase;
+                $data['company_name'] = $company !== '' ? $company : null;
+                $data['company_about'] = $about !== '' ? $about : null;
+            }
         } else {
             $trainingId = (int) $p('training_id');
             if (!isset($programmeOptions[$trainingId])) throw new RuntimeException('Choose a programme.');
@@ -117,6 +128,11 @@ if ($editing && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $data['slug'] = Editorial::slug($pdo, $kind, $p('slug'), $title, $id, $brandId);
         $image = Editorial::upload($pdo, $_FILES['header_image'] ?? [], $brand, (int) $adminUser['id'], "$title — image", $kind === 'trainers' ? 'trainer_profile' : 'other', $paths);
         if ($image || isset($_POST['remove_image'])) $data['image_path'] = $image['url'] ?? null;
+        if ($kind === 'trainers') {
+            $logo = Editorial::upload($pdo, $_FILES['company_logo'] ?? [], $brand, (int)$adminUser['id'],
+                ($data['company_name'] ?? $row['company_name'] ?? $title) . ' — company logo', 'trainer_profile', $paths);
+            if ($logo || isset($_POST['remove_company_logo'])) $data['company_logo_path'] = $logo['url'] ?? null;
+        }
         $agenda = $kind === 'editions' ? Editorial::upload($pdo, $_FILES['agenda'] ?? [], $brand, (int) $adminUser['id'], "$title — agenda", 'agenda', $paths) : null;
         if ($agenda || ($kind === 'editions' && isset($_POST['remove_agenda']))) $data['agenda_asset_id'] = $agenda['id'] ?? null;
         $keys = array_keys($data);
@@ -185,6 +201,16 @@ elseif ($kind === 'trainers'):
     $input('specialties','Specialties (comma separated)','','text','maxlength="500"');
     $input('linkedin_url','LinkedIn profile URL (optional)','','url','maxlength="500" placeholder="https://www.linkedin.com/in/your-name"');
     $area('biography','Biography (Markdown)'); $check('is_published','Publish public profile');
+    ?>
+    <fieldset><legend>Company showcase (optional)</legend>
+        <p class="admin-help">Show a company panel below the trainer hero. Turn this off to hide it without losing the details.</p>
+        <?php $check('company_showcase_enabled','Show company on trainer profile');
+        $input('company_name','Company name','','text','maxlength="160"'); ?>
+        <label>About the company <textarea name="company_about" rows="4" maxlength="600"><?= e($value('company_about')) ?></textarea></label>
+        <label>Company logo <input type="file" name="company_logo" accept="image/jpeg,image/png,image/webp"></label>
+        <?php if (!empty($row['company_logo_path'])): ?><img class="editor-image" src="<?= e($row['company_logo_path']) ?>" alt="Current company logo"><?php $check('remove_company_logo','Remove company logo'); endif; ?>
+    </fieldset>
+    <?php
 else:
     if ($id): ?><input type="hidden" name="training_id" value="<?= (int)$row['training_id'] ?>"><p>Programme: <?= e($programmeOptions[$row['training_id']]) ?></p><?php
     else: $select('training_id','Programme',[''=>'Choose a programme'] + $programmeOptions,''); endif;
