@@ -48,4 +48,27 @@
 .learning-share [hidden]{display:none}
 .learning-share input{width:min(100%,34rem);margin-top:.5rem;font:inherit}
 .learning-share [role=status]{display:block;margin-top:.3rem}
+.learning-editorial{letter-spacing:.012em}
+.learning-editorial h1{letter-spacing:-.025em;line-height:1.09;margin-block:.7rem 1.35rem}
+.learning-editorial h2,.learning-editorial h3{letter-spacing:-.013em}
+.learning-editorial p,.learning-course-copy section>div,.learning-faqs details>div{line-height:1.75}
+.learning-course-copy{padding-block:clamp(1.4rem,3vw,2.8rem)}
+.learning-course-copy section,.learning-sections,.learning-band{padding-block:clamp(1.8rem,4vw,3.65rem)}
+.learning-course-copy section>div{max-width:72ch}
+.learning-course-copy p + p{margin-top:1em}
+.learning-course-copy li + li,.learning-faqs li + li{margin-top:.35em}
+.learning-editorial .learning-band + .learning-band{border-top:1px solid #e7e0fb}
+.learning-highlights{gap:1.2rem;padding-block:clamp(1.8rem,3.8vw,3.4rem)}
+.learning-booking{gap:.9rem}
+.learning-faqs details{padding-block:1.25rem}
+.learning-agenda{padding:clamp(1.25rem,4vw,2.75rem);gap:clamp(1.35rem,4vw,3.5rem)}
+.learning-agenda form{gap:.8rem}
+.learning-agenda-edition{font-weight:700;margin:0}
+.learning-agenda select{width:100%;min-height:44px;font:inherit;color:inherit;background:white;padding:.65rem;border:1px solid #9d8de2;border-radius:.5rem}
+.learning-agenda-jump{display:inline-block;margin-top:.9rem;font-weight:700}
+#agenda{scroll-margin-top:7rem}
+@media(prefers-reduced-motion:no-preference){
+    .learning-reveal{transition:opacity .65s ease,transform .65s cubic-bezier(.2,.7,.25,1)}
+    .learning-reveal-pending:not(:focus-within):not(:target){opacity:0;transform:translateY(16px)}
+}
 @media(max-width:720px){.learning-hero-layout,.learning-agenda{grid-template-columns:1fr}.learning-hero:has(.learning-hero-art):before{background:rgba(241,237,255,.86)}.learning-hero-art{width:100%}.learning-profile{align-items:flex-start;flex-direction:column}.learning-profile img{width:9rem}}

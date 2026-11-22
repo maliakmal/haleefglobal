@@ -3,8 +3,8 @@ declare(strict_types=1);
 require __DIR__ . '/includes/config.php';
 
 use Haleef\Admin\AdminAuth;
-use Haleef\Support\{Csrf, Database, Env};
-use Haleef\Training\{Editorial, Faqs, Markdown, TrainingRepository};
+use Haleef\Support\{Database, Env};
+use Haleef\Training\{AgendaEmail, Editorial, Faqs, Markdown, TrainingRepository};
 
 $preview = isset($previewId);
 if ($preview) AdminAuth::requireUser();
@@ -39,30 +39,14 @@ if ($preview) {
 if (!$training) { http_response_code(404); require __DIR__ . '/not-found.php'; exit; }
 $courseUrl = '/training/courses/' . $training['slug'];
 $trainers = [];
-$agenda = null;
 if ($edition) {
     $q = $pdo->prepare('SELECT tr.* FROM training_trainers tt JOIN trainers tr ON tr.id=tt.trainer_id WHERE tt.edition_id=?' . ($preview ? '' : ' AND tr.is_published=1') . ' ORDER BY tt.display_order,tr.name');
     $q->execute([$edition['id']]); $trainers = $q->fetchAll();
-    $q = $pdo->prepare("SELECT a.id,a.public_url FROM media_assets a JOIN brands b ON b.id=a.brand_id
-        WHERE a.id=? AND a.edition_id=? AND a.asset_type='agenda' AND a.is_published=1 AND b.code='haleef-learning'");
-    $q->execute([$edition['agenda_asset_id'], $edition['id']]); $agenda = $q->fetch() ?: null;
 }
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($preview || !$agenda) { http_response_code(405); header('Allow: GET, HEAD'); exit; }
-    try {
-        Csrf::verify($_POST['_csrf'] ?? null);
-        $email = strtolower(trim(is_string($_POST['email'] ?? null) ? $_POST['email'] : ''));
-        if (!empty($_POST['website']) || strlen($email)>254 || !filter_var($email,FILTER_VALIDATE_EMAIL)) throw new RuntimeException('Enter a valid email address to download the agenda.');
-        $q = $pdo->prepare('INSERT INTO agenda_interests (edition_id,asset_id,email) VALUES (?,?,?) ON DUPLICATE KEY UPDATE last_requested_at=CURRENT_TIMESTAMP');
-        $q->execute([$edition['id'],$agenda['id'],$email]);
-        header('Location: ' . $agenda['public_url'], true, 303);
-        exit;
-    } catch (Throwable $ex) {
-        if ($ex instanceof PDOException) error_log($ex->getMessage());
-        $error = $ex instanceof PDOException ? 'Could not prepare your download. Try again shortly.' : $ex->getMessage();
-    }
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') { http_response_code(405); header('Allow: GET, HEAD'); exit; }
+$agendaOptions = $preview ? [] : (new AgendaEmail($pdo))->eligible((int)$training['id'], $edition ? (int)$edition['id'] : null);
+$agendaInPreview = $preview && !empty($edition['agenda_asset_id']);
+$agendaReturn = $courseUrl . ($edition ? '/' . $edition['slug'] : '');
 $pageTitle = $training['title'];
 $pageDescription = $training['short_description'] ?: 'Haleef Learning professional training programme.';
 $currentPage = 'training';
@@ -90,7 +74,7 @@ require __DIR__ . '/includes/header.php';
 <section class="learning-hero">
 <?php if ($headerImage): ?><img class="learning-hero-art" src="<?= e($headerImage) ?>" alt=""><?php endif; ?>
 <div class="container learning-hero-layout"><div><nav class="learning-crumb"><a href="/training/courses">Courses</a> / <a href="/training/trainers">Trainers</a></nav>
-<span class="eyebrow"><?= e($edition ? $format[$edition['delivery_mode']] : 'Haleef Learning programme') ?></span><h1><?= e($training['title']) ?></h1><p><?= e((string)$training['short_description']) ?></p></div>
+<span class="eyebrow"><?= e($edition ? $format[$edition['delivery_mode']] : 'Haleef Learning programme') ?></span><h1><?= e($training['title']) ?></h1><p><?= e((string)$training['short_description']) ?></p><?php if ($agendaOptions): ?><a class="learning-agenda-jump" href="#agenda">Request the agenda</a><?php endif; ?></div>
 <?php if ($edition): ?><aside class="learning-booking"><strong><?= e($details) ?></strong><span><?= e($edition['timezone']) ?></span><span><?= e($edition['venue_name'] ?: $format[$edition['delivery_mode']]) ?></span><b><?= e($edition['currency']) ?> <?= e(number_format((float)$edition['price'],2)) ?></b>
 <?php if ($training['cpd_available'] && $edition['cpd_points'] !== null): ?><span><?= e((string)$edition['cpd_points']) ?> CPD points</span><?php endif; ?>
 <?php if ($canBook && !$preview): ?><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a>
@@ -106,12 +90,11 @@ foreach ((json_decode((string)$edition['features'],true) ?: []) as $feature) if 
 <?php if (!$edition): ?><section class="container learning-band"><h2>Scheduled editions</h2><?php if (!$editions): ?><p>No editions scheduled yet.</p><?php endif; ?><div class="learning-links"><?php foreach ($editions as $item): ?><a href="<?= e($preview ? '/admin/preview/editions/' . $item['id'] : $courseUrl . '/' . $item['slug']) ?>"><?= e(Editorial::date($item,'starts_at')->format('d M Y') . ' · ' . $format[$item['delivery_mode']]) ?></a><?php endforeach; ?></div></section><?php endif; ?>
 <?php if ($trainers): ?><section class="container learning-band"><h2>Meet your <?= count($trainers) > 1 ? 'trainers' : 'trainer' ?></h2><div class="learning-trainers"><?php foreach ($trainers as $tr): ?><article>
 <?php if ($tr['image_path']): ?><img src="<?= e($tr['image_path']) ?>" alt=""><?php endif; ?><div><h3><?= e($tr['name']) ?></h3><p><?= e((string)$tr['headline']) ?></p><a href="<?= e($preview ? '/admin/preview/trainers/' . $tr['id'] : '/training/trainers/' . $tr['slug']) ?>">View trainer profile</a></div></article><?php endforeach; ?></div></section><?php endif; ?>
-<?php if ($agenda): ?><section id="agenda" class="container learning-band"><div class="learning-agenda"><div><?= $icon('document') ?><h2>Download the agenda</h2><p>Enter your email to get the full PDF. We’ll record your interest in this edition.</p><a href="/privacy">Privacy policy</a></div>
-<?php if ($preview): ?><p>Download form disabled in preview.</p><?php else: ?><form method="post"><?= Csrf::field() ?><?php if ($error): ?><p role="alert"><?= e($error) ?></p><?php endif; ?><label for="agenda-email">Email address</label><input id="agenda-email" name="email" type="email" autocomplete="email" maxlength="254" required><label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label><button class="learning-action" type="submit">Get the agenda</button></form><?php endif; ?></div></section><?php endif; ?>
 <?php if ($editionFaqs): ?><section class="container learning-band learning-faqs" aria-labelledby="edition-faq-title"><h2 id="edition-faq-title">Frequently asked questions</h2>
 <?php foreach ($editionFaqs as $faq): ?><details><summary><?= e($faq['question']) ?></summary><div><?= Markdown::render($faq['answer']) ?></div></details><?php endforeach; ?></section>
 <?php elseif (!$edition): ?><section class="container learning-band"><h2>Training for your team</h2><p><a href="/contact?interest=corporate-training">Ask about a private edition.</a></p></section><?php endif; ?>
 <?php if (!$preview): ?><div class="container learning-band"><?php require __DIR__ . '/includes/learning-share.php'; ?></div><?php endif; ?>
+<?php require __DIR__ . '/includes/learning-agenda.php'; ?>
 <?php if ($canBook && !$preview): ?><section class="learning-final"><h2>Secure your place</h2><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a></section><?php endif; ?>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

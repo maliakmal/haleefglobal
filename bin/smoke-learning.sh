@@ -9,7 +9,7 @@ php bin/migrate.php
 php bin/migrate.php
 php -r 'require "includes/bootstrap.php"; $html=Haleef\Training\Markdown::render("**safe**\n\n- <img src=x>\n- [unsafe](javascript:alert(1))"); if (!str_contains($html,"<strong>safe</strong>") || !str_contains($html,"<ul>") || str_contains($html,"<img") || str_contains($html,"href=")) exit(1);'
 php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->prepare("INSERT INTO admin_users(name,email,password_hash,role) VALUES (?,?,?,?)")->execute(["Smoke","operator@example.test",password_hash("smoke-only-password",PASSWORD_DEFAULT),"administrator"]);'
-php -S 127.0.0.1:8097 router.php >"$tmp/server.log" 2>&1 &
+AGENDA_EMAIL_ENABLED=1 BREVO_API_KEY=smoke-never-sent AGENDA_EMAIL_FROM=sender@example.test php -S 127.0.0.1:8097 router.php >"$tmp/server.log" 2>&1 &
 server=$!
 trap 'code=$?; kill "$server" 2>/dev/null || true; if ((code)); then tail -80 "$tmp/server.log"; head -c 1200 "$tmp/body" || true; fi; exit "$code"' EXIT
 for i in {1..20}; do
@@ -81,13 +81,29 @@ grep -q 'Where do I find the joining instructions?' "$tmp/page"
 grep -q "rel=\"canonical\" href=\"https://www.haleefglobal.com$path\"" "$tmp/page"
 grep -q 'data-learning-share' "$tmp/page"
 grep -q 'Interactive sessions' "$tmp/page"
-grep -q 'Get the agenda' "$tmp/page"
+grep -q 'Email me the agenda' "$tmp/page"
+grep -q 'learning-reveal.js' "$tmp/page"
 ! grep -q 'zoom.us/j/\|/agendas/' "$tmp/page" || exit 1
 visitor="$(csrf <"$tmp/page")"
+[[ "$(status /training/agenda-request)" == 405 ]]
+[[ "$(status /admin/agenda-email)" == 302 ]]
+get admin /admin/agenda-email >"$tmp/template"
+grep -q 'Agenda request template' "$tmp/template"
+submit admin /admin/agenda-email 303 --data-urlencode "_csrf=$token" --data-urlencode 'subject=Agenda for {{training_title}}' --data-urlencode 'body=Hello, here is the agenda for {{edition_date}}: {{agenda_url}}'
+get visitor /training >"$tmp/training"
+grep -q 'Request the agenda' "$tmp/training"
+get visitor /training/courses >"$tmp/calendar"
+grep -q 'Request the agenda' "$tmp/calendar"
 for i in 1 2; do
-    submit visitor "$path" 303 -d "_csrf=$visitor&email=lead@example.test"
-    grep -qi '^Location: https://resources.haleeflearning.com/agendas/' "$tmp/headers"
+    submit visitor /training/agenda-request 303 -d "_csrf=$visitor&email=lead@example.test&edition_id=1&return_path=$path"
+    grep -qi "^Location: $path#agenda" "$tmp/headers"
 done
+get visitor "$path" >"$tmp/requested"
+grep -q 'Check your inbox' "$tmp/requested"
+php bin/smoke-agenda-worker.php
+get admin /admin/agenda-email >"$tmp/jobs"
+grep -q 'lead@example.test' "$tmp/jobs"
+grep -q '>sent<' "$tmp/jobs"
 get admin /admin/agenda-interest >"$tmp/leads"
 [[ "$(grep -o 'lead@example.test' "$tmp/leads" | wc -l)" == 1 ]]
 get admin /admin/resources >"$tmp/resources"

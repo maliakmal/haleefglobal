@@ -23,6 +23,16 @@ if (isset($pages[$route])) {
     exit;
 }
 
+if ($route === 'training/agenda-request') {
+    require __DIR__ . '/handlers/agenda-request.php';
+    exit;
+}
+
+if ($route === 'admin/agenda-email') {
+    require __DIR__ . '/admin/agenda-email.php';
+    exit;
+}
+
 if (preg_match('#^services/([a-z0-9-]+)$#', $route, $matches)) {
     $_GET['service'] = $matches[1];
     require __DIR__ . '/service.php';

@@ -44,7 +44,20 @@ Use **Trainings**, **Editions**, and **Trainers** to create, edit, or privately 
 
 Set the edition's Zoom **attendee** link in the edition editor (never enter a host link). It appears on the private booking URL after bank transfer is marked paid and the attendee is confirmed. Automated joining emails, reminder emails and attendance tracking are not part of this workflow.
 
-An edition agenda upload is listed in **Resources** under Haleef Learning. Its landing page asks for an email and then sends the visitor to the same public file. The public campaign URL can be shared independently and does not capture leads. View recorded requests under **Agenda interest**. Repeated requests for the same edition/file/email update the latest timestamp; do not use the download request as email marketing consent.
+An edition agenda upload is listed in **Resources** under Haleef Learning. Course pages and the Training calendar accept agenda requests for published editions with an uploaded PDF. View requests under **Agenda interest**, and edit the subject and message or inspect queue statuses under **Agenda email**. With email enabled, a request queues the link for delivery; with email disabled the submitter gets the link on the page instead. The direct campaign URL bypasses the form. Do not treat an agenda request as marketing consent.
+
+### Enable agenda email on the droplet
+
+1. Configure a verified Brevo transactional sender and API key. Edit the existing server-side `/var/www/haleefglobal/shared/.env` and set `AGENDA_EMAIL_FROM`, `AGENDA_EMAIL_FROM_NAME` (optional), and `BREVO_API_KEY`. Set `AGENDA_EMAIL_ENABLED=1` once the worker cron is in place. Do not commit or share the API key.
+2. Add this entry with `sudo crontab -u haleef-deploy -e`:
+
+   ```cron
+   * * * * * /usr/bin/php /var/www/haleefglobal/current/bin/send-agenda-emails.php >> /var/www/haleefglobal/shared/storage/logs/agenda-email.log 2>&1
+   ```
+
+3. Run `sudo -u haleef-deploy /usr/bin/php /var/www/haleefglobal/current/bin/send-agenda-emails.php --check` to verify the settings are present without sending mail. Then submit a real request to your own inbox and check **Agenda email** and the Brevo transactional log.
+
+The CLI worker runs at most one batch at a time, retries failures with backoff, and records the Brevo response status. Pending jobs keep the template version used at the time of the request. Repeat requests for a file/email already queued or sent in the last 15 minutes do not generate duplicate mail.
 
 Use **FAQ Library** to manage reusable FAQs and choose which appear by default. **Editions → Edit → Manage edition FAQs** controls what appears on one edition, including overrides, edition-only questions, and display order (lower numbers first). Empty overrides inherit the library content; **Reset to library defaults** restores both content and default visibility.
 

@@ -3,6 +3,14 @@ require __DIR__ . '/includes/config.php';
 $pageTitle = 'Corporate Training';
 $pageDescription = 'Tailored in-house, virtual and bespoke corporate training programmes for teams across the UAE and MENA region.';
 $currentPage = 'training';
+$agendaReturn = '/training';
+try {
+    $agendaOptions = (new \Haleef\Training\AgendaEmail(\Haleef\Support\Database::connection()))->eligible();
+} catch (Throwable $error) {
+    error_log($error->getMessage());
+    $agendaOptions = [];
+}
+header('Cache-Control: private, no-store');
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="training-hero">
@@ -68,4 +76,5 @@ require __DIR__ . '/includes/header.php';
 <section class="training-cta">
     <div class="container training-cta-grid"><div><span class="eyebrow">Start with the challenge</span><h2>Tell us what your team needs to do better.</h2><p>We’ll help turn it into a focused learning brief and the right delivery plan.</p></div><a class="circle-link" href="<?= page_url('contact') ?>?interest=corporate-training"><span>Discuss your<br>programme</span><b>↗</b></a></div>
 </section>
+<div class="learning-editorial"><?php require __DIR__ . '/includes/learning-agenda.php'; ?></div>
 <?php require __DIR__ . '/includes/footer.php'; ?>
