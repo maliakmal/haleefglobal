@@ -24,6 +24,8 @@ get visitor / >"$tmp/home"
 grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
 grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
 if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi
+get visitor /training >"$tmp/no-agenda"
+if grep -Fq 'href="#agenda"' "$tmp/no-agenda"; then exit 1; fi
 submit() {
     local cookie=$1 path=$2 expected=$3 actual
     shift 3
@@ -44,7 +46,7 @@ get admin /admin/preview/trainings/1 >"$tmp/preview"
 grep -q '<strong>Practical overview</strong>' "$tmp/preview"
 get admin /admin/trainings/1/edit >/dev/null
 submit admin /admin/trainings/1/edit 303 -F "_csrf=$token" -F 'title=Advanced Learning Updated' -F 'slug=advanced-learning' -F 'status=published' -F 'description=Practical overview' -F 'audience=Clinical researchers' -F 'learning_outcomes=Applied methods'
-submit admin /admin/trainers/new 303 -F "_csrf=$token" -F 'name=Test Trainer' -F 'is_published=1' -F 'linkedin_url=https://www.linkedin.com/in/test-trainer/?trk=fixture'
+submit admin /admin/trainers/new 303 -F "_csrf=$token" -F 'name=Test Trainer' -F 'is_published=1' -F 'linkedin_url=https://www.linkedin.com/in/test-trainer/?trk=fixture' -F 'company_showcase_enabled=1' -F 'company_name=Example Studio' -F 'company_about=Training and development.' -F 'company_logo=@assets/images/haleef-logo.webp'
 submit admin /admin/trainers/new 303 -F "_csrf=$token" -F 'name=Second Instructor' -F 'is_published=1'
 submit admin /admin/trainers/1/edit 200 -F "_csrf=$token" -F 'name=Test Trainer' -F 'slug=test-trainer' -F 'is_published=1' -F 'linkedin_url=https://linkedin.com.example.test/in/invalid'
 grep -q 'Enter an HTTPS LinkedIn profile URL' "$tmp/body"
@@ -115,6 +117,8 @@ grep -q 'Agenda request template' "$tmp/template"
 submit admin /admin/agenda-email 303 --data-urlencode "_csrf=$token" --data-urlencode 'subject=Agenda for {{training_title}}' --data-urlencode 'body=Hello, here is the agenda for {{edition_date}}: {{agenda_url}}'
 get visitor /training >"$tmp/training"
 grep -q 'Request the agenda' "$tmp/training"
+grep -Fq 'href="#agenda">Request the agenda' "$tmp/training"
+grep -Fq 'id="agenda"' "$tmp/training"
 get visitor /training/courses >"$tmp/calendar"
 grep -q 'Request the agenda' "$tmp/calendar"
 grep -Fq '€1,199.00' "$tmp/calendar"
@@ -144,6 +148,11 @@ grep -q "$path" "$tmp/trainer"
 grep -q 'Share this speaker' "$tmp/trainer"
 grep -q 'www.linkedin.com/sharing/share-offsite' "$tmp/trainer"
 grep -q 'class="learning-trainer-social" href="https://www.linkedin.com/in/test-trainer/"' "$tmp/trainer"
+grep -Fq 'id="trainer-company-title">Example Studio' "$tmp/trainer"
+grep -Fq 'Training and development.' "$tmp/trainer"
+grep -Eq 'class="learning-company-logo".*trainer-profiles/' "$tmp/trainer"
+get visitor /training/trainers/second-instructor >"$tmp/no-company"
+if grep -Fq 'id="trainer-company-title"' "$tmp/no-company"; then exit 1; fi
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=TestBank&iban=TEST"
 get visitor /training/register/advanced-learning-2035 >"$tmp/register"
 grep -Fq '€1,199.00' "$tmp/register"

@@ -50,6 +50,19 @@ require __DIR__ . '/includes/header.php';
 <div class="learning-pills"><?php foreach (array_filter(array_map('trim',explode(',', (string)$trainer['specialties']))) as $tag): ?><span><?= e($tag) ?></span><?php endforeach; ?></div>
 <?php $trainerSocialProfile = $trainer; require __DIR__ . '/includes/trainer-linkedin.php'; ?></div></div>
 <?php else: ?><span class="eyebrow">Haleef Learning</span><h1>Meet our trainers</h1><?php endif; ?></div></section>
+<?php if (!empty($trainer['company_showcase_enabled']) && !empty($trainer['company_name'])): ?>
+<section class="learning-trainer-company" aria-labelledby="trainer-company-title" data-reveal>
+    <div class="container learning-trainer-company-inner">
+        <?php if (!empty($trainer['company_logo_path'])): ?>
+        <div class="learning-company-logo"><img src="<?= e($trainer['company_logo_path']) ?>" alt="" loading="lazy" decoding="async"></div>
+        <?php endif; ?>
+        <div class="learning-company-copy"><span class="eyebrow">Company spotlight</span>
+            <h2 id="trainer-company-title"><?= e($trainer['company_name']) ?></h2>
+            <?php if (!empty($trainer['company_about'])): ?><p><?= e($trainer['company_about']) ?></p><?php endif; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 <?php if ($trainer): ?><section class="container learning-sections"><article><h2>About the trainer</h2><?= Markdown::render($trainer['biography']) ?></article><article><h2>Upcoming courses</h2><div class="learning-links">
 <?php foreach ($courses as $course): ?><a href="<?= e($preview ? '/admin/preview/editions/' . $course['id'] : '/training/courses/' . $course['training_slug'] . '/' . $course['slug']) ?>"><?= e($course['title']) ?><small><?= e(Editorial::date($course,'starts_at')->format('d M Y')) ?></small></a><?php endforeach; ?>
 <?php if (!$courses): ?><p>No upcoming editions listed.</p><?php endif; ?></div></article></section>

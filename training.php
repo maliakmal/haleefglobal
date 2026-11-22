@@ -21,7 +21,7 @@ require __DIR__ . '/includes/header.php';
         <h1>Learning built for<br><em>the work ahead.</em></h1>
         <div class="training-hero-bottom">
             <p>Tailored programmes that connect expert knowledge, active participation and the real priorities of your organisation.</p>
-            <div class="training-hero-actions"><a class="button" href="<?= page_url('training/courses') ?>">Explore programmes</a><a class="text-link text-link-light" href="<?= page_url('contact') ?>?interest=corporate-training">Build a bespoke programme</a></div>
+            <div class="training-hero-actions"><a class="button" href="<?= page_url('training/courses') ?>">Explore programmes</a><?php if ($agendaOptions): ?><a class="button training-agenda-cta" href="#agenda">Request the agenda</a><?php endif; ?><a class="text-link text-link-light" href="<?= page_url('contact') ?>?interest=corporate-training">Build a bespoke programme</a></div>
         </div>
     </div>
     <div class="training-hero-note">Dubai · UAE · MENA</div>
