@@ -24,6 +24,11 @@ get visitor / >"$tmp/home"
 grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
 grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
 if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi
+for page in privacy terms contact; do
+    get visitor "/$page" >"$tmp/contact-address-check"
+    [[ "$(grep -oF 'mailto:team@haleefglobal.com' "$tmp/contact-address-check" | wc -l)" -eq 2 ]]
+    if grep -Fqi 'hello@thehaleef.com' "$tmp/contact-address-check"; then exit 1; fi
+done
 if grep -Fq 'class="whatsapp-contact"' "$tmp/home"; then exit 1; fi
 printf 'WHATSAPP_NUMBER=12025550123\n' >"$tmp/whatsapp.env"
 WHATSAPP_NUMBER=12025550124 php -r 'require "app/Autoload.php"; Haleef\Support\Env::load($argv[1]); require "includes/config.php"; require "includes/whatsapp-widget.php";' "$tmp/whatsapp.env" >"$tmp/widget"
