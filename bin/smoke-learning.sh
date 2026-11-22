@@ -49,7 +49,7 @@ assignment() { grep -o 'name="trainer_assignment_version" value="[a-f0-9]*"' | c
 empty_assignment="$(get admin /admin/editions/new | assignment)"
 edition=(-F "_csrf=$token" -F 'slug=advanced-learning-2035' -F 'training_id=1' -F 'starts_at=2035-02-23T10:00'
     -F 'ends_at=2035-02-25T14:00' -F 'timezone=Europe/Paris' -F 'delivery_mode=online' -F 'registration_status=open'
-    -F 'currency=EUR' -F 'price=1199' -F 'features[]=interactive'
+    -F 'currency=EUR' -F 'price=1199' -F 'capacity=2' -F 'features[]=interactive'
     -F 'zoom_url=https://zoom.us/j/123456789')
 printf '%%PDF-1.4\n%%%%EOF\n' >"$tmp/agenda.pdf"
 submit admin /admin/editions/new 303 "${edition[@]}" -F 'publication_status=draft' -F "agenda=@$tmp/agenda.pdf" -F 'trainer_ids[]=1' -F "trainer_assignment_version=$empty_assignment"
@@ -81,6 +81,8 @@ submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=shared"
 submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=inherit"
 submit admin /admin/editions/1/edit 303 "${edition[@]}" -F 'publication_status=published'
 get visitor "$path" >"$tmp/page"
+grep -q 'Start delegate registration' "$tmp/page"
+grep -q 'Seats are limited' "$tmp/page"
 grep -Fq '€1,199.00' "$tmp/page"
 grep -q 'Meet your trainers' "$tmp/page"
 grep -q 'Second Instructor' "$tmp/page"
@@ -134,13 +136,42 @@ grep -q 'class="learning-trainer-social" href="https://www.linkedin.com/in/test-
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=TestBank&iban=TEST"
 get visitor /training/register/advanced-learning-2035 >"$tmp/register"
 grep -Fq '€1,199.00' "$tmp/register"
-submit visitor /training/register/advanced-learning-2035 302 -d "_csrf=$visitor&name=TestAttendee&email=attendee@example.test&payment_method=bank_transfer"
+grep -q 'Delegate Registration' "$tmp/register"
+grep -q '<h1>Advanced Learning Updated</h1>' "$tmp/register"
+grep -q 'Add another delegate' "$tmp/register"
+register=/training/register/advanced-learning-2035
+delegate_args() {
+    local i=$1 first=$2 email=$3
+    args+=(-F "delegates[$i][first_name]=$first" -F "delegates[$i][surname]=Example" -F "delegates[$i][job_title]=Director"
+        -F "delegates[$i][phone]=+971500000000" -F "delegates[$i][email]=$email" -F "delegates[$i][company]=TestCo")
+}
+common=(-F "_csrf=$visitor" -F 'payment_method=bank_transfer')
+args=()
+delegate_args 0 Taylor attendee@example.test
+submit visitor "$register" 200 "${common[@]}" "${args[@]}" -F 'add_delegate=1'
+grep -Fq '€2,398.00' "$tmp/body"
+grep -Fq 'value="Taylor"' "$tmp/body"
+delegate_args 1 Casey ATTENDEE@example.test
+submit visitor "$register" 200 "${common[@]}" "${args[@]}"
+grep -q 'Each delegate must have a different email address' "$tmp/body"
+args=()
+delegate_args 0 Taylor attendee@example.test
+delegate_args 1 Casey casey@example.test
+group=("${args[@]}")
+delegate_args 2 Harper harper@example.test
+submit visitor "$register" 200 "${common[@]}" "${args[@]}"
+grep -q 'There are not enough seats for your group' "$tmp/body"
+submit visitor "$register" 302 "${common[@]}" "${group[@]}"
 booking="$(awk 'tolower($1)=="location:" {gsub(/\r/,"",$2);print $2}' "$tmp/headers")"
 [[ "$booking" == /training/booking/* ]]
 get visitor "$booking" >"$tmp/booking"
-grep -Fq '€1,199.00' "$tmp/booking"
+grep -Fq '2 delegates · €2,398.00 total' "$tmp/booking"
 ! grep -q 'zoom.us/j/' "$tmp/booking" || exit 1
-submit admin /admin/orders/1 302 -F "_csrf=$token" -F 'reference=SMOKE' -F 'amount=1199' -F "evidence=@$tmp/agenda.pdf"
+submit admin /admin/orders/1 302 -F "_csrf=$token" -F 'reference=SMOKE' -F 'amount=2398' -F "evidence=@$tmp/agenda.pdf"
 get visitor "$booking" >"$tmp/booking"
 grep -q 'Join on Zoom' "$tmp/booking"
+get admin /admin/orders/1 >"$tmp/order"
+grep -q 'Taylor Example' "$tmp/order"
+grep -q 'Casey Example' "$tmp/order"
+[[ "$(grep -o 'status-confirmed' "$tmp/order" | wc -l)" == 2 ]]
 printf 'Learning smoke checks passed.\n'

@@ -19,16 +19,12 @@ final class OrderService
 
     public function create(array $edition, array $input): array
     {
-        $name = trim((string) ($input['name'] ?? ''));
-        $email = filter_var($input['email'] ?? '', FILTER_VALIDATE_EMAIL);
-        $paymentCode = trim((string) ($input['payment_method'] ?? ''));
-
-        if ($name === '' || !$email) {
-            throw new RuntimeException('A valid attendee name and email address are required.');
-        }
+        $delegates = Delegates::validate($input['delegates'] ?? null);
+        $quantity = count($delegates);
+        $contact = $delegates[0];
+        $paymentCode = is_string($input['payment_method'] ?? null) ? trim($input['payment_method']) : '';
 
         $method = $this->paymentMethods->enabledMethod((int) $edition['brand_id'], $paymentCode);
-        $amount = (float) $edition['price'];
         $publicToken = bin2hex(random_bytes(32));
         $pdo = Database::connection();
         $pdo->beginTransaction();
@@ -40,7 +36,9 @@ final class OrderService
             if (!$lockedEdition || $lockedEdition['registration_status'] !== 'open' || $lockedEdition['publication_status'] !== 'published' || $lockedEdition['training_status'] !== 'published' || Editorial::ended($lockedEdition)) {
                 throw new RuntimeException('Registration for this edition has closed.');
             }
-            $amount = (float) $lockedEdition['price'];
+            $totalCents = Delegates::cents((string)$lockedEdition['price']) * $quantity;
+            if ($totalCents > 999999999999) throw new RuntimeException('This group total is too large. Please contact Haleef to book.');
+            $amount = sprintf('%d.%02d', intdiv($totalCents,100), $totalCents % 100);
             $edition['currency'] = $lockedEdition['currency'];
             if ($lockedEdition['capacity'] !== null) {
                 $seatStatement = $pdo->prepare(
@@ -50,8 +48,8 @@ final class OrderService
                        AND (o.status IN ('paid','partially_refunded') OR o.payment_due_at IS NULL OR o.payment_due_at >= NOW())"
                 );
                 $seatStatement->execute([$edition['id']]);
-                if ((int) $seatStatement->fetchColumn() >= (int) $lockedEdition['capacity']) {
-                    throw new RuntimeException('This edition has reached capacity. Please contact Haleef about the waitlist.');
+                if ((int) $seatStatement->fetchColumn() + $quantity > (int) $lockedEdition['capacity']) {
+                    throw new RuntimeException('There are not enough seats for your group. Reduce the number of delegates or contact Haleef.');
                 }
             }
 
@@ -67,37 +65,36 @@ final class OrderService
             $temporary = 'TMP-' . bin2hex(random_bytes(10));
             $orderStatement = $pdo->prepare(
                 'INSERT INTO orders (brand_id, edition_id, order_number, public_token_hash, purchaser_name, purchaser_email, purchaser_phone, company_name, quantity, subtotal, total, currency, selected_payment_method, payment_due_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?)'
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             $orderStatement->execute([
-                $edition['brand_id'], $edition['id'], $temporary, hash('sha256', $publicToken), $name, $email,
-                trim((string) ($input['phone'] ?? '')) ?: null,
-                trim((string) ($input['company'] ?? '')) ?: null,
-                $amount, $amount, $edition['currency'], $paymentCode, $paymentDue->setTimezone($now->getTimezone())->format('Y-m-d H:i:s'),
+                $edition['brand_id'], $edition['id'], $temporary, hash('sha256', $publicToken), $contact['name'], $contact['email'],
+                $contact['phone'], $contact['company'], $quantity, $amount, $amount, $edition['currency'], $paymentCode,
+                $paymentDue->setTimezone($now->getTimezone())->format('Y-m-d H:i:s'),
             ]);
             $orderId = (int) $pdo->lastInsertId();
             $orderNumber = sprintf('HL-%s-%06d', date('Y'), $orderId);
             $pdo->prepare('UPDATE orders SET order_number = ? WHERE id = ?')->execute([$orderNumber, $orderId]);
 
             $attendeeStatement = $pdo->prepare(
-                'INSERT INTO attendees (name, email, phone, company_name, job_title) VALUES (?, ?, ?, ?, ?)'
+                'INSERT INTO attendees (name, email, phone, company_name, job_title, first_name, surname) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
-            $attendeeStatement->execute([
-                $name, $email,
-                trim((string) ($input['phone'] ?? '')) ?: null,
-                trim((string) ($input['company'] ?? '')) ?: null,
-                trim((string) ($input['job_title'] ?? '')) ?: null,
-            ]);
-            $attendeeId = (int) $pdo->lastInsertId();
-            $registrationNumber = sprintf('HLR-%s-%06d', date('Y'), $orderId);
-            $pdo->prepare(
+            $registration = $pdo->prepare(
                 'INSERT INTO registrations (order_id, edition_id, attendee_id, attendee_email, registration_number) VALUES (?, ?, ?, ?, ?)'
-            )->execute([$orderId, $edition['id'], $attendeeId, strtolower((string) $email), $registrationNumber]);
+            );
+            foreach ($delegates as $i=>$delegate) {
+                $attendeeStatement->execute([$delegate['name'],$delegate['email'],$delegate['phone'],$delegate['company'],
+                    $delegate['job_title'],$delegate['first_name'],$delegate['surname']]);
+                $attendeeId = (int)$pdo->lastInsertId();
+                $number = sprintf('HLR-%s-%06d', date('Y'), $orderId) . ($i ? '-' . ($i + 1) : '');
+                $registration->execute([$orderId,$edition['id'],$attendeeId,$delegate['email'],$number]);
+            }
 
             $order = [
                 'id' => $orderId,
                 'order_number' => $orderNumber,
-                'total' => $amount,
+                'total' => (float)$amount,
+                'quantity' => $quantity,
                 'currency' => $edition['currency'],
                 'public_token' => $publicToken,
                 'payment_method' => $method,
@@ -110,7 +107,7 @@ final class OrderService
                 $pdo->rollBack();
             }
             if ($exception instanceof PDOException && $exception->getCode() === '23000') {
-                throw new RuntimeException('This attendee is already registered for the selected edition.', 0, $exception);
+                throw new RuntimeException('One of these delegates is already registered for this edition. No seats were booked.', 0, $exception);
             }
             throw $exception;
         }
