@@ -9,11 +9,15 @@ $pageTitle = 'Upcoming Training Programmes';
 $pageDescription = 'Explore upcoming Haleef Learning masterclasses, workshops and professional development programmes.';
 $currentPage = 'training';
 $databaseError = null;
+$agendaOptions = [];
+$agendaReturn = '/training/courses';
+header('Cache-Control: private, no-store');
 
 try {
     $repository = new TrainingRepository();
     $upcoming = $repository->upcoming();
     $past = $repository->past();
+    $agendaOptions = (new \Haleef\Training\AgendaEmail(\Haleef\Support\Database::connection()))->eligible();
 } catch (Throwable $exception) {
     $upcoming = $past = [];
     $databaseError = 'The programme calendar is being prepared. Please contact the Haleef team for upcoming dates.';
@@ -54,5 +58,6 @@ require __DIR__ . '/includes/header.php';
 <?php if ($past): ?>
 <section class="section past-courses"><div class="container"><span class="eyebrow">Previous editions</span><h2>Past programmes.</h2><div class="past-course-list"><?php foreach ($past as $course): ?><div><span><?= e(date('d M Y', strtotime($course['starts_at']))) ?></span><h3><?= e($course['title']) ?></h3><span><?= e(str_replace('_', ' ', $course['delivery_mode'])) ?></span></div><?php endforeach; ?></div></div></section>
 <?php endif; ?>
+<div class="learning-editorial"><?php require __DIR__ . '/includes/learning-agenda.php'; ?></div>
 <?php require __DIR__ . '/includes/footer.php'; ?>
 
