@@ -5,6 +5,7 @@ namespace Haleef\Orders;
 
 use Haleef\Payments\PaymentMethodRegistry;
 use Haleef\Support\Database;
+use Haleef\Training\Editorial;
 use PDO;
 use PDOException;
 use RuntimeException;
@@ -33,12 +34,14 @@ final class OrderService
         $pdo->beginTransaction();
 
         try {
-            $editionLock = $pdo->prepare('SELECT capacity, registration_status FROM training_editions WHERE id = ? FOR UPDATE');
+            $editionLock = $pdo->prepare('SELECT e.*, t.status AS training_status FROM training_editions e JOIN trainings t ON t.id=e.training_id WHERE e.id = ? FOR UPDATE');
             $editionLock->execute([$edition['id']]);
             $lockedEdition = $editionLock->fetch();
-            if (!$lockedEdition || $lockedEdition['registration_status'] !== 'open') {
+            if (!$lockedEdition || $lockedEdition['registration_status'] !== 'open' || $lockedEdition['publication_status'] !== 'published' || $lockedEdition['training_status'] !== 'published' || Editorial::ended($lockedEdition)) {
                 throw new RuntimeException('Registration for this edition has closed.');
             }
+            $amount = (float) $lockedEdition['price'];
+            $edition['currency'] = $lockedEdition['currency'];
             if ($lockedEdition['capacity'] !== null) {
                 $seatStatement = $pdo->prepare(
                     "SELECT COUNT(*) FROM registrations r
@@ -55,7 +58,7 @@ final class OrderService
             $dueDays = max(1, (int) ($method['configuration']['payment_due_days'] ?? 3));
             $now = new \DateTimeImmutable('now');
             $standardDue = $now->modify('+' . $dueDays . ' days');
-            $courseDeadline = (new \DateTimeImmutable((string) $edition['starts_at']))->modify('-1 day');
+            $courseDeadline = Editorial::date($lockedEdition, 'starts_at')->modify('-1 day');
             $paymentDue = $standardDue < $courseDeadline ? $standardDue : $courseDeadline;
             if ($paymentDue <= $now) {
                 $paymentDue = $now->modify('+2 hours');
@@ -70,7 +73,7 @@ final class OrderService
                 $edition['brand_id'], $edition['id'], $temporary, hash('sha256', $publicToken), $name, $email,
                 trim((string) ($input['phone'] ?? '')) ?: null,
                 trim((string) ($input['company'] ?? '')) ?: null,
-                $amount, $amount, $edition['currency'], $paymentCode, $paymentDue->format('Y-m-d H:i:s'),
+                $amount, $amount, $edition['currency'], $paymentCode, $paymentDue->setTimezone($now->getTimezone())->format('Y-m-d H:i:s'),
             ]);
             $orderId = (int) $pdo->lastInsertId();
             $orderNumber = sprintf('HL-%s-%06d', date('Y'), $orderId);
@@ -120,13 +123,16 @@ final class OrderService
         }
 
         $statement = Database::connection()->prepare(
-            'SELECT o.*, e.starts_at, e.ends_at, e.timezone, e.delivery_mode, e.venue_name,
+            "SELECT o.*, e.starts_at, e.ends_at, e.timezone, e.delivery_mode, e.venue_name,
+                    CASE WHEN o.status='paid' AND e.delivery_mode IN ('online','hybrid')
+                         AND EXISTS (SELECT 1 FROM registrations r WHERE r.order_id=o.id AND r.status IN ('confirmed','attended'))
+                         THEN e.zoom_url ELSE NULL END AS attendee_zoom_url,
                     t.title AS training_title, t.slug AS training_slug, b.name AS brand_name
              FROM orders o
              INNER JOIN training_editions e ON e.id = o.edition_id
              INNER JOIN trainings t ON t.id = e.training_id
              INNER JOIN brands b ON b.id = o.brand_id
-             WHERE o.public_token_hash = ? LIMIT 1'
+             WHERE o.public_token_hash = ? LIMIT 1"
         );
         $statement->execute([hash('sha256', $token)]);
         $order = $statement->fetch();

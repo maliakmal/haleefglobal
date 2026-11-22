@@ -26,6 +26,7 @@ require __DIR__ . '/includes/header.php';
         <span class="eyebrow">Haleef Learning</span>
         <h1>Programmes built for<br><em>professional impact.</em></h1>
         <p>Live online and in-person learning led by experienced specialists, with practical outcomes and selected CPD opportunities.</p>
+        <a class="button button-dark" href="/training/trainers">Meet our trainers</a>
     </div>
 </section>
 
@@ -43,7 +44,7 @@ require __DIR__ . '/includes/header.php';
                         <h3><?= e($course['title']) ?></h3>
                         <p><?= e((string) $course['short_description']) ?></p>
                     </div>
-                    <div class="course-card-action"><span><?= e($course['currency']) ?> <?= e(number_format((float) $course['price'], 2)) ?></span><a class="button button-dark" href="/training/courses/<?= e($course['training_slug']) ?>">View programme</a></div>
+                    <div class="course-card-action"><span><?= e($course['currency']) ?> <?= e(number_format((float) $course['price'], 2)) ?></span><a class="button button-dark" href="/training/courses/<?= e($course['training_slug'] . '/' . $course['edition_slug']) ?>">View edition</a></div>
                 </article>
             <?php endforeach; ?>
         </div>

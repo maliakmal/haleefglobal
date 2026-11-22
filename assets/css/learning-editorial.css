@@ -1,0 +1,40 @@
+.learning-editorial{--learn-ink:#15143d;--learn-purple:#5140a1;--learn-soft:#eeeaff;--learn-aqua:#00ddec;color:var(--learn-ink);background:#fbfaff}
+.learning-editorial a:not(.learning-action){color:var(--learn-purple);text-underline-offset:.2em}
+.learning-editorial p{line-height:1.6}
+.learning-editorial h1,.learning-editorial h2,.learning-editorial h3{color:inherit}
+.learning-editorial h1{font-size:clamp(2.3rem,5vw,4.4rem);line-height:1.03;max-width:18ch;margin:.5rem 0 1rem;letter-spacing:-.045em}
+.learning-editorial h2{font-size:clamp(1.4rem,2.5vw,2rem);line-height:1.15;margin-bottom:.8rem}
+.learning-hero{position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 78% 26%,#d5caff 0,transparent 56%),linear-gradient(125deg,#f7f4ff,#e5dfff);padding:clamp(2.2rem,5vw,5rem) 0}
+.learning-hero-art{position:absolute;z-index:-2;inset:0 0 0 auto;width:75%;height:100%;object-fit:cover;object-position:center}
+.learning-hero:has(.learning-hero-art):before{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,#f1edff 16%,rgba(241,237,255,.94) 40%,rgba(241,237,255,.18) 100%)}
+.learning-hero-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(16rem,22rem);align-items:center;gap:2rem}
+.learning-hero-layout p{max-width:53ch}
+.learning-crumb{display:flex;gap:.65rem;margin:0 0 1.45rem;font-weight:700}
+.learning-booking{display:grid;gap:.65rem;padding:1.5rem;border:1px solid #dcd3fa;border-radius:1rem;background:#fbf9ff;box-shadow:0 10px 35px #15143d18}
+.learning-booking b{font-size:1.8rem;border-top:1px solid #dcd3fa;padding-top:.65rem}
+.learning-action{display:inline-flex;align-items:center;justify-content:center;background:var(--learn-aqua);color:#071b2d;border:0;border-radius:.65rem;min-height:44px;padding:.65rem 1.15rem;font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
+.learning-action:hover{background:#8af4fa}
+.learning-highlights,.learning-sections,.learning-trainers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:1rem}
+.learning-highlights{padding-block:1.75rem}
+.learning-highlights>div,.learning-trainers article{display:flex;gap:1rem;align-items:flex-start;background:var(--learn-soft);border-radius:.85rem;padding:1rem}
+.learning-editorial svg{width:1.55rem;height:1.55rem;flex:none;color:var(--learn-purple)}
+.learning-highlights p,.learning-trainers p{margin:.2rem 0}
+.learning-sections,.learning-band{padding-block:2rem}
+.learning-sections article{border-top:2px solid #dcd3fa;padding:1rem .8rem 0 0}
+.learning-sections ul,.learning-sections ol{padding-left:1.25rem;margin:.6rem 0}
+.learning-trainers img{width:6rem;aspect-ratio:1;object-fit:cover;border-radius:.6rem}
+.learning-agenda{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:1.5rem;background:var(--learn-soft);border-radius:1rem;align-items:center}
+.learning-agenda form{display:grid;gap:.5rem}
+.learning-agenda input:not([tabindex]){font:inherit;color:inherit;background:white;padding:.75rem;border:1px solid #9d8de2;border-radius:.5rem}
+.learning-preview,.learning-final{background:var(--learn-ink);color:white}
+.learning-preview{padding:.7rem 0}
+.learning-preview a:not(.learning-action){color:var(--learn-aqua);margin-left:.75rem}
+.learning-final{text-align:center;padding:2.5rem 1rem}
+.learning-editorial details{border-bottom:1px solid #dcd3fa;padding:1rem 0}
+.learning-editorial summary{cursor:pointer;font-weight:700}
+.learning-profile{display:flex;gap:clamp(1.2rem,4vw,3rem);align-items:center}
+.learning-profile img{width:min(26vw,17rem);aspect-ratio:1;object-fit:cover;border-radius:1rem}
+.learning-pills,.learning-links{display:flex;gap:.55rem;flex-wrap:wrap}
+.learning-pills span,.learning-links a{padding:.6rem .85rem;background:#e9e2fc;border-radius:.65rem}
+.learning-links small{display:block}
+@media(max-width:720px){.learning-hero-layout,.learning-agenda{grid-template-columns:1fr}.learning-hero:has(.learning-hero-art):before{background:rgba(241,237,255,.86)}.learning-hero-art{width:100%}.learning-profile{align-items:flex-start;flex-direction:column}.learning-profile img{width:9rem}}

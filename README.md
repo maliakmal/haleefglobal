@@ -40,6 +40,12 @@ Keep the `storage/private` directory outside the public web root where possible.
 
 The Resources screen at `/admin/resources` stores public campaign files separately for Haleef Global and Haleef Learning and generates branded URLs. In production, point `PUBLIC_STORAGE_PATH` to the shared folder outside the release directories so deployments never remove uploaded files.
 
+Use **Trainings**, **Editions**, and **Trainers** to create, edit, or privately preview saved records. Editions have independent publication and registration controls. A published edition needs a published programme to appear in the calendar or accept registrations. Leave the slug blank to generate it; changing an existing slug changes public links.
+
+Set the edition's Zoom **attendee** link in the edition editor (never enter a host link). It appears on the private booking URL after bank transfer is marked paid and the attendee is confirmed. Automated joining emails, reminder emails and attendance tracking are not part of this workflow.
+
+An edition agenda upload is listed in **Resources** under Haleef Learning. Its landing page asks for an email and then sends the visitor to the same public file. The public campaign URL can be shared independently and does not capture leads. View recorded requests under **Agenda interest**. Repeated requests for the same edition/file/email update the latest timestamp; do not use the download request as email marketing consent.
+
 Production deployment assets are in `deploy/`, the GitHub Actions workflow is `.github/workflows/deploy-production.yml`, and the complete Apache/Sendy-safe server checklist is in `docs/PRODUCTION_DEPLOYMENT.md`.
 
 ### Nginx route and protection
