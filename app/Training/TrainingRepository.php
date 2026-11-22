@@ -54,7 +54,7 @@ final class TrainingRepository
 
         $editions = Database::connection()->prepare(
             "SELECT id, slug, starts_at, ends_at, timezone, venue_name, venue_address, delivery_mode, price, currency,
-                    cpd_points, registration_status, image_path, features, agenda_asset_id
+                    cpd_points, capacity, registration_status, image_path, features, agenda_asset_id
              FROM training_editions WHERE training_id = ? AND publication_status='published' ORDER BY starts_at ASC"
         );
         $editions->execute([$training['id']]);

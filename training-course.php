@@ -77,7 +77,8 @@ require __DIR__ . '/includes/header.php';
 <span class="eyebrow"><?= e($edition ? $format[$edition['delivery_mode']] : 'Haleef Learning programme') ?></span><h1><?= e($training['title']) ?></h1><p><?= e((string)$training['short_description']) ?></p><?php if ($agendaOptions): ?><a class="learning-agenda-jump" href="#agenda">Request the agenda</a><?php endif; ?></div>
 <?php if ($edition): ?><aside class="learning-booking"><strong><?= e($details) ?></strong><span><?= e($edition['timezone']) ?></span><span><?= e($edition['venue_name'] ?: $format[$edition['delivery_mode']]) ?></span><b><?= e(\Haleef\Support\MoneyDisplay::format((float)$edition['price'], $edition['currency'])) ?></b>
 <?php if ($training['cpd_available'] && $edition['cpd_points'] !== null): ?><span><?= e((string)$edition['cpd_points']) ?> CPD points</span><?php endif; ?>
-<?php if ($canBook && !$preview): ?><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a>
+<?php if ($canBook && !$preview): ?><a class="learning-action learning-book-cta" href="/training/register/<?= e($edition['slug']) ?>"><span>Book your seat</span><small>Register one or more delegates</small></a>
+<p class="learning-book-note"><?= $edition['capacity'] !== null ? 'Seats are limited. Register early to give your team time to complete payment.' : 'Register early to give yourself time to complete payment before the training starts.' ?></p>
 <?php elseif ($preview): ?><span>Booking disabled in preview</span>
 <?php elseif ($edition['registration_status']==='waitlist' && !Editorial::ended($edition)): ?><a class="learning-action" href="/contact?interest=corporate-training">Enquire about the waitlist</a>
 <?php else: ?><span>Registration closed</span><?php endif; ?></aside><?php endif; ?>
@@ -95,6 +96,6 @@ foreach ((json_decode((string)$edition['features'],true) ?: []) as $feature) if 
 <?php elseif (!$edition): ?><section class="container learning-band"><h2>Training for your team</h2><p><a href="/contact?interest=corporate-training">Ask about a private edition.</a></p></section><?php endif; ?>
 <?php if (!$preview): ?><div class="container learning-band"><?php require __DIR__ . '/includes/learning-share.php'; ?></div><?php endif; ?>
 <?php require __DIR__ . '/includes/learning-agenda.php'; ?>
-<?php if ($canBook && !$preview): ?><section class="learning-final"><h2>Secure your place</h2><a class="learning-action" href="/training/register/<?= e($edition['slug']) ?>">Book your seat</a></section><?php endif; ?>
+<?php if ($canBook && !$preview): ?><section class="learning-final"><div class="container learning-final-layout"><div><span class="eyebrow">Registration open</span><h2>Secure your place before training day</h2><p>Book for yourself or bring your team. Add every delegate in one registration and leave time to complete payment before the course begins.</p></div><a class="learning-action learning-book-cta" href="/training/register/<?= e($edition['slug']) ?>"><span>Book your seat</span><small>Start delegate registration</small></a></div></section><?php endif; ?>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>
