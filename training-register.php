@@ -70,6 +70,7 @@ require __DIR__ . '/includes/header.php';
             <h1><?= e($edition['training_title'] ?? 'Registration unavailable') ?></h1>
             <?php if ($edition): ?><div class="delegate-hero-facts">
                 <span><?= e(Editorial::date($edition,'starts_at')->format('d M Y') . ' – ' . Editorial::date($edition,'ends_at')->format('d M Y')) ?></span>
+                <span><?= e(Editorial::timezoneLabel($edition)) ?></span>
                 <span><?= e(ucwords(str_replace('_',' ',$edition['delivery_mode']))) ?></span>
                 <span><?= e(MoneyDisplay::format($unitCents / 100,$currency)) ?> per delegate</span>
             </div><?php endif; ?>

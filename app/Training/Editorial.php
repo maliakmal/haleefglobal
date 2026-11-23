@@ -66,4 +66,19 @@ final class Editorial
     {
         return self::date($edition, 'ends_at')->getTimestamp() < time();
     }
+
+    public static function timezoneLabel(array $edition): string
+    {
+        $label = static function (\DateTimeImmutable $date): string {
+            $zone = $date->getTimezone()->getName();
+            if ($date->getOffset() === 0 && in_array($zone, ['UTC','Etc/UTC','GMT','Etc/GMT','Etc/GMT+0','Etc/GMT-0','Etc/GMT0'], true)) return 'UTC';
+            if ($zone === 'Asia/Dubai' && $date->getOffset() === 14400) return 'GST';
+            $abbreviation = $date->format('T');
+            if (preg_match('/^[A-Z]{2,6}$/D', $abbreviation)) return $abbreviation;
+            return $date->getOffset() === 0 ? 'UTC' : 'UTC' . $date->format('P');
+        };
+        $start = $label(self::date($edition, 'starts_at'));
+        $end = $label(self::date($edition, 'ends_at'));
+        return $start === $end ? $start : $start . ' / ' . $end;
+    }
 }
