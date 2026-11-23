@@ -14,7 +14,7 @@ Open `http://localhost:8000`.
 
 ## Hosting
 
-Upload the project contents to a PHP 8.1+ host with the PDO MySQL and Fileinfo extensions. Ensure PHP `mail()` is configured or replace the contact handler with the production email provider of choice.
+Upload the project contents to a PHP 8.1+ host with the PDO MySQL and Fileinfo extensions. The contact form uses Brevo's transactional HTTPS API and requires PHP cURL and `BREVO_API_KEY`. Set `CONTACT_EMAIL_FROM` to a verified Brevo sender, or leave it blank to reuse `AGENDA_EMAIL_FROM`. On production, set these in `/var/www/haleefglobal/shared/.env`. Enquiries go to `team@haleefglobal.com` and replies go to the visitor. This works independently of the agenda email worker and does not require local sendmail.
 
 `index.php` is the application front controller and `router.php` provides the same route handling for PHP’s built-in server. Apache/LiteSpeed can use the included `.htaccess` to pass non-file requests to the front controller. Nginx should use `try_files $uri $uri/ /index.php?$query_string;`.
 

@@ -2,14 +2,30 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !empty($_POST['website'] ?? '')) {
-    header('Location: /contact?error=1'); exit;
+use Haleef\Support\ContactEmail;
+use Haleef\Support\Csrf;
+
+$result = 'error=1';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
+    $token = is_string($_POST['_csrf'] ?? null) ? $_POST['_csrf'] : null;
+    if ($token && hash_equals(Csrf::token(), $token)) {
+        $now = time();
+        $recent = array_values(array_filter($_SESSION['contact_send_attempts'] ?? [], static fn(int $at): bool => $at > $now - 600));
+        if (count($recent) < 3) {
+            $_SESSION['contact_send_attempts'] = [...$recent, $now];
+            session_write_close();
+            try {
+                ContactEmail::send($_POST, SITE_EMAIL);
+                $result = 'sent=1';
+            } catch (InvalidArgumentException) {
+                // Invalid form data; do not send or log the visitor's details.
+            } catch (RuntimeException $error) {
+                error_log('[Haleef contact] ' . $error->getMessage());
+            } catch (Throwable) {
+                error_log('[Haleef contact] Unexpected mail transport error.');
+            }
+        }
+    }
 }
-$name = trim((string)($_POST['name'] ?? ''));
-$email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
-$message = trim((string)($_POST['message'] ?? ''));
-if ($name === '' || !$email || $message === '') { header('Location: /contact?error=1'); exit; }
-$body = "New Haleef website enquiry\n\nName: {$name}\nEmail: {$email}\nCompany: " . trim((string)($_POST['company'] ?? '')) . "\nType: " . trim((string)($_POST['type'] ?? '')) . "\nLocation: " . trim((string)($_POST['location'] ?? '')) . "\n\nBrief:\n{$message}";
-$headers = "From: Haleef Website <" . SITE_EMAIL . ">\r\nReply-To: {$email}\r\nContent-Type: text/plain; charset=UTF-8";
-$ok = @mail(SITE_EMAIL, 'New website enquiry from ' . $name, $body, $headers);
-header('Location: /contact?' . ($ok ? 'sent=1' : 'error=1')); exit;
+header('Location: /contact?' . $result, true, 303);
+exit;

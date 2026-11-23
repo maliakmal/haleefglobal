@@ -7,6 +7,7 @@ base=http://127.0.0.1:8097
 export PUBLIC_STORAGE_PATH="$tmp/public" PRIVATE_STORAGE_PATH="$tmp/private"
 php bin/migrate.php
 php bin/migrate.php
+BREVO_API_KEY=fixture CONTACT_EMAIL_FROM=verified@example.test AGENDA_EMAIL_FROM=agenda@example.test php -r 'require "includes/config.php"; $input=["name"=>"Test Visitor","email"=>"visitor@example.test","company"=>"Example Org","type"=>"Training","location"=>"Dubai","message"=>"Please tell me about training."]; $assert=static function ($key,$mail) { if ($key!=="fixture" || $mail["sender"]["email"]!=="verified@example.test" || $mail["to"]!==[["email"=>"team@haleefglobal.com"]] || $mail["replyTo"]!==["email"=>"visitor@example.test"] || !str_contains($mail["textContent"],"Please tell me about training.")) throw new RuntimeException("Wrong contact email payload"); }; Haleef\Support\ContactEmail::send($input,SITE_EMAIL,$assert); putenv("CONTACT_EMAIL_FROM="); Haleef\Support\ContactEmail::send($input,SITE_EMAIL,static function ($key,$mail) { if ($mail["sender"]["email"]!=="agenda@example.test") throw new RuntimeException("Sender fallback failed"); });'
 php -r 'require "includes/bootstrap.php"; use Haleef\Training\Editorial; foreach ([["Europe/Berlin","2027-02-10","2027-02-11","CET"],["Europe/Berlin","2027-07-10","2027-07-11","CEST"],["Europe/Berlin","2027-03-27","2027-03-29","CET / CEST"],["Etc/UTC","2027-07-10","2027-07-11","UTC"],["America/New_York","2027-07-10","2027-07-11","EDT"],["America/Los_Angeles","2027-02-10","2027-02-11","PST"],["Asia/Dubai","2027-07-10","2027-07-11","GST"]] as [$timezone,$start,$end,$expected]) { if (Editorial::timezoneLabel(["timezone"=>$timezone,"starts_at"=>$start." 09:00:00","ends_at"=>$end." 09:00:00"]) !== $expected) throw new RuntimeException("Wrong time zone label for $timezone"); }'
 php -r 'require "includes/bootstrap.php"; use Haleef\Support\MoneyDisplay; foreach ([["USD",10,"US$10.00"],["EUR",1199,"€1,199.00"],["GBP",-1.5,"-£1.50"],["AED",120,"120.00\u{00A0}\u{2067}د.إ\u{2069}"],["CHF",10,"CHF 10.00"]] as [$code,$amount,$expected]) { if (MoneyDisplay::format($amount,$code) !== $expected) throw new RuntimeException("Wrong display for $code"); }'
 php -r 'require "includes/bootstrap.php"; $html=Haleef\Training\Markdown::render("**safe**\n\n- <img src=x>\n- [unsafe](javascript:alert(1))"); if (!str_contains($html,"<strong>safe</strong>") || !str_contains($html,"<ul>") || str_contains($html,"<img") || str_contains($html,"href=")) exit(1);'
@@ -51,6 +52,12 @@ submit() {
     fi
 }
 token="$(get admin /admin/login | csrf)"
+get visitor /contact >"$tmp/contact-form"
+contact_token="$(csrf <"$tmp/contact-form")"
+submit visitor /handlers/contact-submit.php 303 -d 'name=Test&email=fixture%40example.test&message=Test'
+grep -Fqi 'Location: /contact?error=1' "$tmp/headers"
+submit visitor /handlers/contact-submit.php 303 -d "_csrf=$contact_token&website=bot&name=Test&email=fixture%40example.test&message=Test"
+grep -Fqi 'Location: /contact?error=1' "$tmp/headers"
 submit admin /admin/login 302 -d "_csrf=$token&email=operator@example.test&password=smoke-only-password"
 token="$(get admin /admin/trainings/new | csrf)"
 submit admin /admin/trainings/new 303 -F "_csrf=$token" -F 'title=Advanced Learning' -F 'status=draft' -F 'description=**Practical overview**' -F 'header_image=@assets/images/haleef-logo.webp'
