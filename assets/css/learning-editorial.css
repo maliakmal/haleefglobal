@@ -113,6 +113,10 @@
 .delegate-card legend{padding:0 .45rem;color:#352273;font-weight:700}
 .delegate-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}
 .delegate-fields input{min-width:0}
+.delegate-phone{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.85rem}
+.delegate-phone select{width:100%;min-width:0;appearance:none;padding-right:2rem;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23412c85' stroke-width='1.6' d='m4 6 4 4 4-4'/%3E%3C/svg%3E");background-position:right .7rem center;background-repeat:no-repeat}
+.booking-invoice{border-top:1px solid #ded6e6;padding-top:1rem;margin-top:1.15rem;display:flex;align-items:flex-start;flex-direction:column;gap:.45rem}
+.booking-invoice h3,.booking-invoice p{margin:0}
 .delegate-main .delegate-fields label{margin:0;text-transform:none;font-size:.9rem;letter-spacing:normal}
 .delegate-add,.delegate-remove{font:inherit;font-weight:700;color:#412c85;background:#eeeaff;border:1px solid #ddd2ff;border-radius:.6rem;min-height:44px;padding:.55rem .85rem;cursor:pointer}
 .delegate-add:disabled{opacity:.6;cursor:default}
@@ -129,7 +133,7 @@
 .delegate-submit{width:100%}
 .delegate-totals p{font-size:.9rem;color:#575270;margin:.9rem 0 0}
 @media(max-width:820px){.delegate-form,.learning-final-layout{grid-template-columns:1fr}.delegate-totals{position:static}}
-@media(max-width:480px){.delegate-fields{grid-template-columns:1fr}}
+@media(max-width:480px){.delegate-fields,.delegate-phone{grid-template-columns:1fr}}
 
 .learning-trainer-company{background:linear-gradient(115deg,#f0ebff,#fbf9ff);border-block:1px solid #e5dcfa}
 .learning-trainer-company-inner{display:flex;align-items:center;flex-wrap:wrap;gap:1.15rem 1.9rem;padding-block:clamp(1.5rem,3.5vw,2.65rem)}

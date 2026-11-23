@@ -12,6 +12,7 @@ use Haleef\Orders\RegistrationEmail;
 use Haleef\Support\Database;
 
 if (in_array('--check', $argv, true)) {
+    echo 'Automatic bank-transfer invoices: ' . (Invoices::enabled() ? 'enabled' : 'disabled') . ".\n";
     Invoices::issuer();
     if (!RegistrationEmail::configured()) throw new RuntimeException('Brevo registration sender is not configured.');
     foreach (['dom','gd','mbstring'] as $extension) {

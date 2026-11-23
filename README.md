@@ -54,6 +54,8 @@ Deploy through Actions; it bundles the locked Composer dependencies and the depl
 
 New bank-transfer orders issue one invoice for the whole group. The registration session and signed-in admins can download it; there is no publicly served invoice file. Each delegate receives a separate email. Only the first delegate (the booking contact) receives the PDF. Admin Orders shows queue status and lets admins retry failed pending-payment notifications. PDFs are stored in MariaDB; protect database backups as customer data. Existing orders are not backfilled or emailed automatically.
 
+If a PDF is missing, open the specific booking under **Admin → Orders**. “No automatic invoice was issued” means no PDF exists, and changing browsers or starting the worker will not create one. If automatic issuance is disabled, run the preflight and check the shared environment setting before making a fresh test booking. If staff can download the PDF but the customer cannot, check the original booking session or the booking contact’s email.
+
 Keep the `storage/private` directory outside the public web root where possible. Apache and the development router also deny direct access to internal directories, but server-level isolation is preferred.
 
 The Resources screen at `/admin/resources` stores public campaign files separately for Haleef Global and Haleef Learning and generates branded URLs. In production, point `PUBLIC_STORAGE_PATH` to the shared folder outside the release directories so deployments never remove uploaded files.

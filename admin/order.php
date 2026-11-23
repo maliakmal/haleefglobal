@@ -57,8 +57,9 @@ require __DIR__ . '/_header.php';
 <div class="order-heading"><div><span class="status status-<?= e($order['status']) ?>"><?= e(str_replace('_',' ',$order['status'])) ?></span><h2><?= e($order['title']) ?></h2><p><?= e(date('d M Y',strtotime($order['starts_at']))) ?> – <?= e(date('d M Y',strtotime($order['ends_at']))) ?> · <?= e($order['timezone']) ?></p></div><div class="order-total"><span>Order total · <?= (int)$order['quantity'] ?> <?= (int)$order['quantity'] === 1 ? 'delegate' : 'delegates' ?></span><strong><?= e(\Haleef\Support\MoneyDisplay::format((float)$order['total'], $order['currency'])) ?></strong><small>Outstanding <?= e(\Haleef\Support\MoneyDisplay::format($outstanding, $order['currency'])) ?></small></div></div>
 <div class="admin-two-column"><div><section class="admin-panel"><div class="panel-heading"><div><span>Purchaser</span><h2><?= e($order['purchaser_name']) ?></h2></div></div><dl class="admin-details"><div><dt>Email</dt><dd><?= e($order['purchaser_email']) ?></dd></div><div><dt>Phone</dt><dd><?= e((string)$order['purchaser_phone']) ?: '—' ?></dd></div><div><dt>Company</dt><dd><?= e((string)$order['company_name']) ?: '—' ?></dd></div><div><dt>Payment method</dt><dd><?= e(str_replace('_',' ',$order['selected_payment_method'])) ?></dd></div></dl></section><section class="admin-panel"><div class="panel-heading"><div><span>Registration</span><h2>Attendees</h2></div></div><?php foreach($attendees as $attendee): ?><div class="attendee-row"><div><strong><?= e($attendee['name']) ?></strong><span><?= e($attendee['email']) ?></span><?php if ($attendee['job_title'] || $attendee['company_name']): ?><span><?= e(implode(' · ', array_filter([$attendee['job_title'],$attendee['company_name']]))) ?></span><?php endif; ?><?php if ($attendee['phone']): ?><span><?= e($attendee['phone']) ?></span><?php endif; ?></div><div><small><?= e($attendee['registration_number']) ?></small><span class="status status-<?= e($attendee['registration_status']) ?>"><?= e(str_replace('_',' ',$attendee['registration_status'])) ?></span></div></div><?php endforeach; ?></section></div>
 <div><section class="admin-panel admin-form-panel"><span>Manual payment</span><h2>Record bank transfer</h2><?php if ($outstanding <= 0): ?><div class="admin-alert admin-alert-success">This order is fully paid.</div><?php else: ?><form method="post" enctype="multipart/form-data"><?= Csrf::field() ?><label>Bank reference<input name="reference" required></label><label>Amount received<input type="number" name="amount" min="0.01" step="0.01" max="<?= e((string)$outstanding) ?>" value="<?= e(number_format($outstanding,2,'.','')) ?>" required></label><label>Transfer confirmation<input type="file" name="evidence" accept="application/pdf,image/jpeg,image/png,image/webp" required><small>PDF, JPG, PNG or WebP. Maximum size is configured on the server.</small></label><button type="submit">Mark payment received</button></form><?php endif; ?></section><section class="admin-panel"><div class="panel-heading"><div><span>Audit trail</span><h2>Payments</h2></div></div><?php if(!$payments): ?><div class="admin-empty">No payments recorded.</div><?php else: ?><?php foreach($payments as $payment): ?><div class="payment-row"><div><strong><?= e(\Haleef\Support\MoneyDisplay::format((float)$payment['amount'], $payment['currency'])) ?></strong><span><?= e($payment['provider_reference']) ?></span></div><div><span class="status status-<?= e($payment['status']) ?>"><?= e($payment['status']) ?></span><?php if($payment['evidence_id']): ?><a href="/admin/payment-evidence/<?= (int)$payment['evidence_id'] ?>"><?= e($payment['original_name']) ?></a><?php endif; ?></div></div><?php endforeach; ?><?php endif; ?></section></div></div>
-<?php if ($order['invoice_number']): ?>
+<?php if ($order['selected_payment_method'] === 'bank_transfer'): ?>
 <section class="admin-panel">
+    <?php if ($order['invoice_number']): ?>
     <div class="panel-heading"><div><span><?= e($order['invoice_number']) ?></span><h2>Invoice and registration emails</h2></div>
         <a href="/admin/orders/<?= $orderId ?>/invoice">Download invoice PDF</a></div>
     <?php foreach ($invoiceJobs as $job): ?>
@@ -69,6 +70,15 @@ require __DIR__ . '/_header.php';
         <form method="post"><?= Csrf::field() ?><input type="hidden" name="action" value="retry_registration_email"><input type="hidden" name="job_id" value="<?= (int)$job['id'] ?>"><button type="submit">Retry email</button></form>
         <?php endif; ?></div></div>
     <?php endforeach; ?>
+    <?php else: ?>
+    <div class="panel-heading"><div><h2>Bank transfer invoice</h2></div></div>
+    <p>No automatic invoice was issued for this booking. Nothing is queued to send for this order.</p>
+    <?php if (!\Haleef\Orders\Invoices::enabled()): ?>
+    <p>Automatic issuance is currently off in the website configuration. Set <code>BANK_TRANSFER_INVOICES_ENABLED=1</code> after confirming the <a href="/admin/payment-methods">bank settings</a> and running the email worker preflight.</p>
+    <?php else: ?>
+    <p>Automatic issuance is on now, but it applies to new bank-transfer orders only. This booking needs a manual invoice.</p>
+    <?php endif; ?>
+    <?php endif; ?>
 </section>
 <?php endif; ?>
 <?php require __DIR__ . '/_footer.php'; ?>
