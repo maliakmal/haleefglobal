@@ -7,7 +7,6 @@ use Haleef\Payments\PaymentMethodRegistry;
 use Haleef\Support\Database;
 use Haleef\Training\Editorial;
 use PDO;
-use PDOException;
 use RuntimeException;
 use Throwable;
 
@@ -126,9 +125,6 @@ final class OrderService
         } catch (Throwable $exception) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
-            }
-            if ($exception instanceof PDOException && $exception->getCode() === '23000') {
-                throw new RuntimeException('One of these delegates is already registered for this edition. No seats were booked.', 0, $exception);
             }
             throw $exception;
         }

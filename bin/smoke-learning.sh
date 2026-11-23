@@ -201,11 +201,14 @@ grep -Fq '€1,199.00' "$tmp/register"
 grep -q 'Delegate Registration' "$tmp/register"
 grep -q '<h1>Advanced Learning Updated</h1>' "$tmp/register"
 grep -q 'Add another delegate' "$tmp/register"
+grep -Fq 'United Arab Emirates (+971)' "$tmp/register"
+grep -Fq 'United Kingdom (+44)' "$tmp/register"
+php -r 'require "includes/bootstrap.php"; use Haleef\Orders\DelegatePhone; foreach ([["AE","050 123 4567","+971501234567"],["GB","07911 123456","+447911123456"],["IT","02 12345678","+390212345678"],["AE","٠٥٠١٢٣٤٥٦٧","+971501234567"],["GB","0044 7911 123456","+447911123456"]] as [$region,$phone,$expected]) if (DelegatePhone::normalize($region,$phone,"Test phone") !== $expected) throw new RuntimeException("Wrong phone normalization");'
 register=/training/register/advanced-learning-2035
 delegate_args() {
     local i=$1 first=$2 email=$3
     args+=(-F "delegates[$i][first_name]=$first" -F "delegates[$i][surname]=Example" -F "delegates[$i][job_title]=Director"
-        -F "delegates[$i][phone]=+971500000000" -F "delegates[$i][email]=$email" -F "delegates[$i][company]=TestCo")
+        -F "delegates[$i][phone_region]=AE" -F "delegates[$i][phone]=0500000000" -F "delegates[$i][email]=$email" -F "delegates[$i][company]=TestCo")
 }
 common=(-F "_csrf=$visitor" -F 'payment_method=bank_transfer')
 args=()
@@ -213,9 +216,8 @@ delegate_args 0 Taylor attendee@example.test
 submit visitor "$register" 200 "${common[@]}" "${args[@]}" -F 'add_delegate=1'
 grep -Fq '€2,398.00' "$tmp/body"
 grep -Fq 'value="Taylor"' "$tmp/body"
-delegate_args 1 Casey ATTENDEE@example.test
-submit visitor "$register" 200 "${common[@]}" "${args[@]}"
-grep -q 'Each delegate must have a different email address' "$tmp/body"
+submit visitor "$register" 200 "${common[@]}" "${args[@]}" -F 'delegates[0][phone]=+44 7911 123456'
+grep -q 'phone number does not match the selected country code' "$tmp/body"
 args=()
 delegate_args 0 Taylor attendee@example.test
 delegate_args 1 Casey casey@example.test
@@ -241,6 +243,7 @@ get admin /admin/orders/1/invoice >"$tmp/admin-invoice.pdf"
 cmp "$tmp/invoice.pdf" "$tmp/admin-invoice.pdf"
 get other "$booking" >"$tmp/other-booking"
 ! grep -q 'Download invoice PDF' "$tmp/other-booking" || exit 1
+grep -q 'only the original registration session can download' "$tmp/other-booking"
 php bin/smoke-registration-email.php "$tmp/invoice.pdf"
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=UpdatedBank&iban=UPDATED"
 get visitor "$booking" >"$tmp/snapshot-booking"
@@ -254,4 +257,17 @@ grep -q 'Taylor Example' "$tmp/order"
 grep -q 'Casey Example' "$tmp/order"
 grep -q 'Invoice and registration emails' "$tmp/order"
 [[ "$(grep -o 'status-confirmed' "$tmp/order" | wc -l)" == 2 ]]
+php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->exec("UPDATE training_editions SET capacity=5 WHERE id=1");'
+args=()
+delegate_args 0 Taylor attendee@example.test
+delegate_args 1 Shared ATTENDEE@example.test
+submit visitor "$register" 302 "${common[@]}" "${args[@]}"
+get admin /admin/orders/2 >"$tmp/repeat-order"
+grep -q 'Shared Example' "$tmp/repeat-order"
+grep -Fq '+971500000000' "$tmp/repeat-order"
+BANK_TRANSFER_INVOICES_ENABLED=0 php -r 'require "includes/bootstrap.php"; $d=["first_name"=>"Manual","surname"=>"Invoice","company"=>"Fixture", "phone"=>"+971500000000","email"=>"attendee@example.test","job_title"=>"Delegate"]; $edition=(new Haleef\Training\TrainingRepository())->findOpenEdition("advanced-learning-2035"); echo (new Haleef\Orders\OrderService())->create($edition,["delegates"=>[$d],"payment_method"=>"bank_transfer"])["public_token"];' >"$tmp/manual-token"
+get visitor "/training/booking/$(<"$tmp/manual-token")" >"$tmp/manual-booking"
+grep -q 'No automatic invoice was issued' "$tmp/manual-booking"
+get admin /admin/orders/3 >"$tmp/manual-order"
+grep -q 'Nothing is queued to send for this order' "$tmp/manual-order"
 printf 'Learning smoke checks passed.\n'

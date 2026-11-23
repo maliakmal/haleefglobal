@@ -23,7 +23,6 @@ final class Delegates
             throw new RuntimeException('Enter details for 1 to ' . self::LIMIT . ' delegates.');
         }
         $delegates = [];
-        $emails = [];
         foreach (array_values($payload) as $i => $raw) {
             $label = 'Delegate ' . ($i + 1);
             $delegate = [];
@@ -38,9 +37,8 @@ final class Delegates
             $email = strtolower($delegate['email']);
             if (mb_strlen($delegate['name'], 'UTF-8') > 190) throw new RuntimeException("$label: the full name is too long.");
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) throw new RuntimeException("$label: enter a valid email address.");
-            if (isset($emails[$email])) throw new RuntimeException('Each delegate must have a different email address.');
-            $emails[$email] = true;
             $delegate['email'] = $email;
+            $delegate['phone'] = DelegatePhone::normalize($raw['phone_region'] ?? null, $delegate['phone'], $label);
             $delegates[] = $delegate;
         }
         return $delegates;

@@ -18,7 +18,7 @@ if (delegateForm) {
                 remove.hidden = false;
                 remove.querySelector('.sr-only').textContent = `delegate ${index + 1}`;
             }
-            row.querySelectorAll('input').forEach(input => {
+            row.querySelectorAll('input, select').forEach(input => {
                 input.name = input.name.replace(/^delegates\[[^\]]*\]/, `delegates[${index}]`);
                 input.autocomplete = input.autocomplete.replace(/^section-delegate\S+/, `section-delegate${index}`);
             });

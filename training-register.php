@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/includes/config.php';
 
-use Haleef\Orders\{Delegates, Invoices, OrderService};
+use Haleef\Orders\{DelegatePhone, Delegates, Invoices, OrderService};
 use Haleef\Payments\PaymentMethodRegistry;
 use Haleef\Support\{Csrf, MoneyDisplay};
 use Haleef\Training\{Editorial, TrainingRepository};
@@ -49,12 +49,28 @@ $currentPage = 'training';
 $renderDelegate = static function (int|string $index, mixed $row): void {
     $first = $index === 0;
     $number = is_int($index) ? (string)($index + 1) : '';
+    $regions = DelegatePhone::regions();
+    $region = is_string($row['phone_region'] ?? null) && isset($regions[$row['phone_region']]) ? $row['phone_region'] : DelegatePhone::DEFAULT_REGION;
 ?>
 <fieldset class="delegate-card" data-delegate>
     <legend>Delegate <span data-delegate-number><?= e($number) ?></span><?= $first ? ' · Booking contact' : '' ?></legend>
     <?php if (!$first): ?><button class="delegate-remove" type="button" data-remove-delegate hidden>Remove <span class="sr-only">delegate <?= e($number) ?></span></button><noscript><button class="delegate-remove" type="submit" name="remove_delegate" value="<?= e((string)$index) ?>" formnovalidate>Remove delegate <?= e($number) ?></button></noscript><?php endif; ?>
     <div class="delegate-fields">
         <?php foreach (Delegates::FIELDS as $key=>[$label,$type,$autocomplete,$limit]): ?>
+        <?php if ($key === 'phone'): ?>
+        <div class="delegate-phone">
+            <label>Country code
+                <select name="delegates[<?= e((string)$index) ?>][phone_region]" required>
+                    <?php foreach ($regions as $iso=>[$country,$code]): ?>
+                    <option value="<?= e($iso) ?>" <?= $region === $iso ? 'selected' : '' ?>><?= e($country . ' (+' . $code . ')') ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </label>
+            <label>Phone number
+                <input name="delegates[<?= e((string)$index) ?>][phone]" type="tel" inputmode="tel" autocomplete="section-delegate<?= e((string)$index) ?> tel-national" maxlength="80" required value="<?= e(is_string($row['phone'] ?? null) ? $row['phone'] : '') ?>">
+            </label>
+        </div>
+        <?php continue; endif; ?>
         <label><?= e($label) ?><input name="delegates[<?= e((string)$index) ?>][<?= e($key) ?>]" type="<?= e($type) ?>" autocomplete="section-delegate<?= e((string)$index) ?> <?= e($autocomplete) ?>" maxlength="<?= $limit ?>" required value="<?= e(is_string($row[$key] ?? null) ? $row[$key] : '') ?>"></label>
         <?php endforeach; ?>
     </div>
@@ -115,5 +131,5 @@ require __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </div>
 </section>
-<?php if ($edition && $methods): ?><script src="/assets/js/delegate-registration.js" defer></script><?php endif; ?>
+<?php if ($edition && $methods): ?><script src="/assets/js/delegate-registration.js?v=2" defer></script><?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>
