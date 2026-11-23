@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Admin\AdminAuth;
+use Haleef\Admin\{AdminAuth, Lists};
 use Haleef\Support\{Csrf, Database, Flash};
 use Haleef\Training\Faqs;
 
@@ -67,6 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+$shared = Lists::searchRows($editionId ? $faqs->sharedForEdition($editionId) : $faqs->library(),['question','answer','local_question','local_answer']);
+$custom = $editionId ? Lists::searchRows($faqs->custom($editionId),['question','answer']) : [];
+if (Lists::exporting()) {
+    $export = static fn(array $r,string $source): array => [$source,$r['local_question'] ?? $r['question'],$r['local_answer'] ?? $r['answer'],
+        ($r['enabled'] ?? $r['default_enabled'] ?? 0) ? 'Yes' : 'No',$r['local_order'] ?? $r['sort_order']];
+    Lists::csv($editionId ? 'edition-faqs-'.$editionId : 'faq-library',['Source','Question','Answer','Enabled','Priority'],
+        [...array_map(static fn($r)=>$export($r,'Library'),$shared),...array_map(static fn($r)=>$export($r,'Edition only'),$custom)]);
+}
 $adminPageTitle = $editionId ? 'Edition FAQs' : 'FAQ Library';
 require __DIR__ . '/_header.php';
 $form = static function (array $row, string $mode, bool $new = false): void {
@@ -94,11 +102,12 @@ $form = static function (array $row, string $mode, bool $new = false): void {
 <?php if ($editionId): ?><div class="panel-heading"><h2><?= e($edition['title']) ?> · <?= e($edition['slug']) ?></h2><div><a href="/admin/editions/<?= $editionId ?>/edit">Back to edition</a> · <a href="/admin/preview/editions/<?= $editionId ?>" target="_blank" rel="noopener">Preview edition</a></div></div>
 <p>Enable, hide or change a reusable question for this edition only. Changes here do not affect the <a href="/admin/faqs">FAQ library</a>.</p>
 <?php else: ?><h2>Reusable FAQs</h2><p>Library edits flow through to editions that inherit the content. Default entries appear automatically, unless an edition hides them.</p><?php endif; ?>
-<?php foreach (($editionId ? $faqs->sharedForEdition($editionId) : $faqs->library()) as $row): ?>
+<?php Lists::filter($base,[],'Question or answer'); ?>
+<?php foreach ($shared as $row): ?>
 <details class="faq-admin-item"><summary><?= e($row['local_question'] ?? $row['question']) ?> · <?= ($row['enabled'] ?? $row['default_enabled']) ? ($editionId ? 'Shown' : 'Default') : ($editionId ? 'Hidden' : 'Optional') ?></summary>
 <?php $form($row,$editionId ? 'shared' : 'library'); ?></details>
 <?php endforeach; ?></section>
 <section class="admin-panel admin-form-panel"><h2><?= $editionId ? 'Edition-only FAQs' : 'Add a library FAQ' ?></h2>
-<?php if ($editionId): foreach ($faqs->custom($editionId) as $row): ?><details class="faq-admin-item"><summary><?= e($row['question']) ?> · <?= $row['enabled'] ? 'Shown' : 'Hidden' ?></summary><?php $form($row,'custom'); ?></details><?php endforeach; endif; ?>
+<?php if ($editionId): foreach ($custom as $row): ?><details class="faq-admin-item"><summary><?= e($row['question']) ?> · <?= $row['enabled'] ? 'Shown' : 'Hidden' ?></summary><?php $form($row,'custom'); ?></details><?php endforeach; endif; ?>
 <?php $form([], $editionId ? 'custom' : 'library', true); ?></section>
 <?php require __DIR__ . '/_footer.php'; ?>

@@ -10,6 +10,7 @@ require dirname(__DIR__) . '/includes/bootstrap.php';
 use Haleef\Orders\Invoices;
 use Haleef\Orders\RegistrationEmail;
 use Haleef\Support\Database;
+use Haleef\Support\ContactEnquiries;
 
 if (in_array('--check', $argv, true)) {
     echo 'Automatic bank-transfer invoices: ' . (Invoices::enabled() ? 'enabled' : 'disabled') . ".\n";
@@ -23,6 +24,12 @@ if (in_array('--check', $argv, true)) {
     echo "Invoice worker prerequisites are present (no email sent).\n";
     exit;
 }
-if (!Invoices::enabled()) exit;
-if (!RegistrationEmail::configured()) throw new RuntimeException('Brevo registration sender is not configured.');
-RegistrationEmail::process(Database::connection(), [RegistrationEmail::class,'sendBrevo']);
+$pdo = Database::connection();
+try {
+    if (Invoices::enabled()) {
+        if (!RegistrationEmail::configured()) throw new RuntimeException('Brevo registration sender is not configured.');
+        RegistrationEmail::process($pdo, [RegistrationEmail::class,'sendBrevo']);
+    }
+} finally {
+    ContactEnquiries::process($pdo);
+}

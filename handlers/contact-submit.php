@@ -2,8 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Support\ContactEmail;
-use Haleef\Support\Csrf;
+use Haleef\Support\{ContactEnquiries, Csrf, Database};
 
 $result = 'error=1';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
@@ -15,14 +14,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
             $_SESSION['contact_send_attempts'] = [...$recent, $now];
             session_write_close();
             try {
-                ContactEmail::send($_POST, SITE_EMAIL);
+                ContactEnquiries::submit(Database::connection(), $_POST, SITE_EMAIL);
                 $result = 'sent=1';
             } catch (InvalidArgumentException) {
                 // Invalid form data; do not send or log the visitor's details.
             } catch (RuntimeException $error) {
-                error_log('[Haleef contact] ' . $error->getMessage());
+                error_log('[Haleef contact] Could not save enquiry (' . get_class($error) . ').');
             } catch (Throwable) {
-                error_log('[Haleef contact] Unexpected mail transport error.');
+                error_log('[Haleef contact] Unexpected enquiry storage error.');
             }
         }
     }

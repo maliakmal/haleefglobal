@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Admin\AdminAuth;
+use Haleef\Admin\{AdminAuth, Lists};
 use Haleef\Support\{Csrf, Database, Flash};
 use Haleef\Training\AgendaEmail;
 
@@ -24,9 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = $ex instanceof PDOException ? 'The template could not be saved.' : $ex->getMessage();
     }
 }
-$jobs = $pdo->query('SELECT j.status,j.attempts,j.created_at,j.sent_at,j.last_error,l.email,t.title FROM learning_agenda_email_jobs j
-    JOIN agenda_interests l ON l.id=j.interest_id JOIN training_editions e ON e.id=l.edition_id JOIN trainings t ON t.id=e.training_id
-    ORDER BY j.id DESC LIMIT 50')->fetchAll();
+$statuses = ['queued'=>'Queued','sent'=>'Sent to Brevo','failed'=>'Failed'];
+$q = Lists::select($pdo,'SELECT l.email,t.title,j.created_at,j.status,j.attempts,j.sent_at,j.last_error FROM learning_agenda_email_jobs j
+    JOIN agenda_interests l ON l.id=j.interest_id JOIN training_editions e ON e.id=l.edition_id JOIN trainings t ON t.id=e.training_id WHERE 1=1',
+    ['l.email','t.title'],'j.id DESC','j.status',$statuses,50);
+if (Lists::exporting()) Lists::csv('agenda-email',['Recipient','Course','Queued','Status','Attempts','Sent','Last error'],Lists::rows($q));
+$jobs = $q->fetchAll();
 $adminPageTitle = 'Agenda email';
 require __DIR__ . '/_header.php';
 ?>
@@ -34,14 +37,10 @@ require __DIR__ . '/_header.php';
     <h2>Agenda request template</h2>
     <p><?= AgendaEmail::configured() ? 'Email transport settings are present. Check the queue below or run a test request to verify delivery.' : 'Email transport is not enabled. Visitors can still download the PDF after submitting the form.' ?></p>
     <?php if ($error): ?><div class="admin-alert admin-alert-error" role="alert"><?= e($error) ?></div><?php endif; ?>
-    <p>Supported placeholders: <code>{{training_title}}</code>, <code>{{edition_date}}</code>, and <code>{{agenda_url}}</code>. Keep the agenda URL in the message body.</p>
-    <form method="post"><?= Csrf::field() ?>
-        <label>Subject<input name="subject" value="<?= e($template['subject']) ?>" maxlength="200" required></label>
-        <label>Plain-text message<textarea name="body" rows="10" maxlength="8000" required><?= e($template['body']) ?></textarea></label>
-        <button type="submit">Save email template</button>
-    </form>
+    <p><a href="/admin/email-templates?template=agenda_request">Edit this template in Email Templates</a></p>
 </section>
 <section class="admin-panel"><h2>Recent email jobs</h2>
+    <?php Lists::filter('/admin/agenda-email',$statuses,'Recipient or course'); ?>
     <p>“Sent” means Brevo accepted the message. Delivery to the inbox is not guaranteed.</p>
     <?php if (!$jobs): ?><p>No email jobs yet.</p><?php else: ?>
     <div class="admin-table-wrap"><table><thead><tr><th>Recipient / course</th><th>Queued</th><th>Status</th><th>Attempts</th><th>Last error</th></tr></thead><tbody>

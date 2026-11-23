@@ -167,12 +167,28 @@ if ($editing && $_SERVER['REQUEST_METHOD'] === 'POST') {
 $labels = ['trainings'=>'Programme','editions'=>'Edition','trainers'=>'Trainer'];
 $label = $labels[$kind];
 $adminPageTitle = $editing ? ($id ? "Edit $label" : "New $label") : ucfirst($kind);
+if (!$editing) {
+    $rows = $pdo->query("SELECT * FROM $table WHERE 1=1$scope ORDER BY id DESC")->fetchAll();
+    $statuses = $kind === 'trainings' ? ['draft'=>'Draft','published'=>'Published','archived'=>'Archived'] : ['draft'=>'Draft','published'=>'Published'];
+    $rows = array_map(static function (array $item) use ($programmeOptions): array {
+        $item['display_name'] = $item['title'] ?? $item['name'] ?? (($programmeOptions[$item['training_id']] ?? 'Programme') . ' · ' . $item['starts_at']);
+        $item['list_status'] = $item['status'] ?? $item['publication_status'] ?? ($item['is_published'] ? 'published' : 'draft');
+        return $item;
+    },$rows);
+    $status = \Haleef\Admin\Lists::status($statuses);
+    if ($status !== '') $rows = array_values(array_filter($rows,static fn($item)=>$item['list_status']===$status));
+    $rows = \Haleef\Admin\Lists::searchRows($rows,['display_name','slug']);
+    if (\Haleef\Admin\Lists::exporting()) {
+        $csv = array_map(static fn($r)=>[$r['id'],$r['display_name'],$r['slug'],$r['list_status'],$r['registration_status'] ?? '',$r['starts_at'] ?? '',$r['ends_at'] ?? ''],$rows);
+        \Haleef\Admin\Lists::csv($kind,['ID','Name','Slug','Status','Registration status','Starts','Ends'],$csv);
+    }
+}
 require __DIR__ . '/_header.php';
 $preview = static fn(int $key): string => "/admin/preview/$kind/$key";
 if (!$editing):
-    $rows = $pdo->query("SELECT * FROM $table WHERE 1=1$scope ORDER BY id DESC")->fetchAll();
 ?>
 <section class="admin-panel"><div class="panel-heading"><h2><?= e($adminPageTitle) ?></h2><a href="<?= e($base) ?>/new">Create <?= e(strtolower($label)) ?></a></div>
+<?php \Haleef\Admin\Lists::filter($base,$statuses,'Name or URL slug'); ?>
 <div class="admin-table-wrap"><table><thead><tr><th>Name / date</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 <?php foreach ($rows as $item): ?><tr><td><strong><?= e($item['title'] ?? $item['name'] ?? ($programmeOptions[$item['training_id']] . ' · ' . $item['starts_at'])) ?></strong><small><?= e($item['slug']) ?></small></td><td><?= e($item['status'] ?? (isset($item['publication_status']) ? $item['publication_status'] . ' / ' . $item['registration_status'] : ($item['is_published'] ? 'published' : 'draft'))) ?></td><td><a href="<?= e($base . '/' . $item['id'] . '/edit') ?>">Edit</a> · <a href="<?= e($preview((int)$item['id'])) ?>" target="_blank" rel="noopener">Preview</a></td></tr><?php endforeach; ?>
 </tbody></table></div><?php if (!$rows): ?><p>No records yet.</p><?php endif; ?></section>

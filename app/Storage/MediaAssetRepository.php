@@ -30,7 +30,7 @@ final class MediaAssetRepository
         )->fetchAll();
     }
 
-    public function listing(string $search, string $category, string $type, int $page): array
+    private function listingCriteria(string $search, string $category, string $type): array
     {
         $conditions = [];
         $params = [];
@@ -48,6 +48,21 @@ final class MediaAssetRepository
         }
         $from = ' FROM media_assets ma INNER JOIN brands b ON b.id = ma.brand_id'
             . ($conditions ? ' WHERE ' . implode(' AND ', $conditions) : '');
+        return [$from,$params];
+    }
+
+    public function export(string $search, string $category, string $type): \PDOStatement
+    {
+        [$from,$params] = $this->listingCriteria($search,$category,$type);
+        $q = $this->pdo->prepare("SELECT ma.title,b.name,ma.asset_type,ma.mime_type,ma.public_url,ma.size_bytes,
+            IF(ma.is_published,'Published','Archived'),ma.created_at".$from.' ORDER BY ma.created_at DESC,ma.id DESC');
+        $q->execute($params);
+        return $q;
+    }
+
+    public function listing(string $search, string $category, string $type, int $page): array
+    {
+        [$from,$params] = $this->listingCriteria($search,$category,$type);
         $count = $this->pdo->prepare('SELECT COUNT(*)' . $from);
         $count->execute($params);
         $total = (int) $count->fetchColumn();

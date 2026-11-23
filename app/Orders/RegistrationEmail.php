@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Haleef\Orders;
 
-use Haleef\Support\Env;
+use Haleef\Support\{EmailTemplates, Env};
 use PDO;
 use RuntimeException;
 
@@ -23,22 +23,18 @@ final class RegistrationEmail
 
     public static function queue(PDO $pdo, int $orderId, array $invoice, array $delegates): void
     {
-        $insert = $pdo->prepare('INSERT INTO order_registration_email_jobs (order_id,registration_id,recipient,subject,body,attach_invoice) VALUES (?,?,?,?,?,?)');
-        $subject = mb_substr('Registration received: ' . preg_replace('/\s+/u', ' ', $invoice['training']), 0, 230);
+        $insert = $pdo->prepare('INSERT INTO order_registration_email_jobs (order_id,registration_id,recipient,subject,body,html_body,attach_invoice) VALUES (?,?,?,?,?,?,?)');
+        $templates = [];
         foreach ($delegates as $i => $delegate) {
-            $body = "Hi {$delegate['first_name']},\n\nWe received your registration for {$invoice['training']}.\n\n"
-                . "Schedule: {$invoice['schedule']}\nFormat: {$invoice['mode']}\n"
-                . "Booking: {$invoice['order']}\nYour registration: {$delegate['registration_number']}\n\n"
-                . "Your seat is pending until Haleef verifies the bank transfer.\n";
-            if ($i === 0) {
-                $total = number_format($invoice['total_cents'] / 100, 2, '.', ',');
-                $body .= "\nYour invoice {$invoice['number']} is attached. Please transfer {$invoice['currency']} {$total} by {$invoice['due']} "
-                    . "and use {$invoice['bank']['reference']} as the payment reference.\n";
-            } else {
-                $body .= "\nPayment instructions have been sent separately to the booking contact.\n";
-            }
-            $body .= "\nQuestions? Reply to this email.\n\nHaleef Learning";
-            $insert->execute([$orderId,$delegate['registration_id'],$delegate['email'],$subject,$body,(int)($i === 0)]);
+            $key = $i === 0 ? 'registration_contact' : 'registration_delegate';
+            $t = $templates[$key] ??= EmailTemplates::load($pdo,$key);
+            $copy = EmailTemplates::render($key,$t['subject'],$t['body'],[
+                'first_name'=>$delegate['first_name'],'training_title'=>$invoice['training'],'schedule'=>$invoice['schedule'],
+                'mode'=>$invoice['mode'],'booking_reference'=>$invoice['order'],'registration_reference'=>$delegate['registration_number'],
+                'invoice_number'=>$invoice['number'],'amount'=>$invoice['currency'].' '.number_format($invoice['total_cents']/100,2,'.',','),
+                'payment_due'=>$invoice['due'],'payment_reference'=>$invoice['bank']['reference'],
+            ]);
+            $insert->execute([$orderId,$delegate['registration_id'],$delegate['email'],$copy['subject'],$copy['text'],$copy['html'],(int)($i === 0)]);
         }
     }
 
@@ -81,7 +77,7 @@ final class RegistrationEmail
             'replyTo'=>['email'=>Invoices::issuer()['email']],
             'to'=>[['email'=>$job['recipient']]],
             'subject'=>$job['subject'],'textContent'=>$job['body'],
-            'htmlContent'=>'<html><body><p>' . nl2br(htmlspecialchars($job['body'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</p></body></html>',
+            'htmlContent'=>$job['html_body'] ?? ('<html><body><p>' . nl2br(htmlspecialchars($job['body'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')) . '</p></body></html>'),
             'tags'=>['haleef-registration'],
         ];
         if ($job['attach_invoice']) {

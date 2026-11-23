@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Admin\AdminAuth;
+use Haleef\Admin\{AdminAuth, Lists};
 use Haleef\Storage\LocalPublicAssetStorage;
 use Haleef\Storage\MediaAssetRepository;
 use Haleef\Support\Csrf;
@@ -106,6 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+if (Lists::exporting()) {
+    Lists::csv('resources',['Title','Brand','Category','MIME type','Public URL','Bytes','Status','Created'],
+        Lists::rows($repository->export($search,$category,$fileType)));
+}
 $brands = $repository->brands();
 $replacements = $repository->replacements();
 $listing = $repository->listing($search,$category,$fileType,$requestedPage);
@@ -158,7 +162,7 @@ require __DIR__ . '/_header.php';
 </section>
 
 <section class="admin-panel" id="resources-list">
-    <div class="panel-heading"><div><span>Resource library</span><h2>Uploaded files</h2></div></div>
+    <div class="panel-heading"><div><span>Resource library</span><h2>Uploaded files</h2></div><a href="<?= e('/admin/resources?'.http_build_query(['format'=>'csv','q'=>$search,'category'=>$category,'type'=>$fileType])) ?>">Download CSV</a></div>
     <form class="admin-form-panel resource-filters" action="/admin/resources#resources-list" method="get" role="search" aria-label="Search uploaded files">
         <label>Title<input name="q" type="search" value="<?= e($search) ?>" maxlength="255" placeholder="Search by full or partial title"></label>
         <label>Category<select name="category"><option value="">All categories</option>

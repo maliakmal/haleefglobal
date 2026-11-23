@@ -8,7 +8,7 @@ use RuntimeException;
 
 final class ContactEmail
 {
-    public static function send(array $input, string $recipient, ?callable $transport = null): void
+    public static function fields(array $input): array
     {
         $field = static function (string $name, int $limit) use ($input): string {
             $value = is_string($input[$name] ?? null) ? trim($input[$name]) : '';
@@ -26,12 +26,24 @@ final class ContactEmail
         $company = $field('company', 300);
         $type = $field('type', 200);
         $location = $field('location', 300);
+        return compact('name','email','message','company','type','location');
+    }
+
+    public static function sender(): array
+    {
         $apiKey = trim(Env::get('BREVO_API_KEY') ?? '');
         $sender = trim(Env::get('CONTACT_EMAIL_FROM') ?? '');
         if ($sender === '') $sender = trim(Env::get('AGENDA_EMAIL_FROM') ?? '');
         if ($apiKey === '' || preg_match('/[\r\n]/', $apiKey) || !filter_var($sender, FILTER_VALIDATE_EMAIL)) {
             throw new RuntimeException('Brevo API key or verified contact sender is not configured.');
         }
+        return [$apiKey,$sender];
+    }
+
+    public static function send(array $input, string $recipient, ?callable $transport = null): void
+    {
+        ['name'=>$name,'email'=>$email,'message'=>$message,'company'=>$company,'type'=>$type,'location'=>$location] = self::fields($input);
+        [$apiKey,$sender] = self::sender();
         $payload = [
             'sender'=>['name'=>'Haleef Website','email'=>$sender],
             'to'=>[['email'=>$recipient]],
@@ -43,7 +55,7 @@ final class ContactEmail
         ($transport ?? [self::class, 'deliver'])($apiKey, $payload);
     }
 
-    private static function deliver(string $apiKey, array $payload): void
+    public static function deliver(string $apiKey, array $payload): string
     {
         if (!function_exists('curl_init')) throw new RuntimeException('PHP cURL is not available.');
         $request = curl_init('https://api.brevo.com/v3/smtp/email');
@@ -61,6 +73,7 @@ final class ContactEmail
             $status = (int) curl_getinfo($request, CURLINFO_RESPONSE_CODE);
             if ($response === false) throw new RuntimeException('Brevo connection failed (cURL ' . curl_errno($request) . ').');
             if ($status !== 201) throw new RuntimeException('Brevo returned HTTP ' . $status . '.');
+            return substr((string)(json_decode($response,true)['messageId'] ?? ''),0,255);
         } finally {
             curl_close($request);
         }

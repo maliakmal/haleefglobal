@@ -17,7 +17,8 @@ $transport = static function (array $job) use (&$received, $pdf): string {
     $payload = RegistrationEmail::payload($job);
     $email = $payload['to'][0]['email'];
     if (!str_contains($payload['textContent'], 'Advanced Learning Updated') || !str_contains($payload['textContent'], 'HLR-') ||
-        str_contains($payload['textContent'], 'zoom.us') || str_contains($payload['textContent'], '/training/booking/')) {
+        str_contains($payload['textContent'], 'zoom.us') || str_contains($payload['textContent'], '/training/booking/') ||
+        !str_contains($payload['htmlContent'], '<strong>Advanced Learning Updated</strong>')) {
         throw new LogicException('Registration details were incomplete or disclosed a private URL.');
     }
     if ($email === 'attendee@example.test') {

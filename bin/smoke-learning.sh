@@ -62,6 +62,28 @@ submit visitor /handlers/contact-submit.php 303 -d "_csrf=$contact_token&website
 grep -Fqi 'Location: /contact?error=1' "$tmp/headers"
 submit admin /admin/login 302 -d "_csrf=$token&email=operator@example.test&password=smoke-only-password"
 token="$(get admin /admin/trainings/new | csrf)"
+[[ "$(status '/admin/contact-enquiries?format=csv')" == 302 ]]
+[[ "$(status '/admin/email-templates?format=csv')" == 302 ]]
+get admin /admin/email-templates >"$tmp/email-editor"
+grep -Fq 'Plain-text version' "$tmp/email-editor"
+submit admin '/admin/email-templates?template=contact_staff&preview=1' 200 --data-urlencode "_csrf=$token" \
+    --data-urlencode 'subject=Preview contact' --data-urlencode 'body=**Brief:** {{message}}'
+php -r '$v=json_decode(file_get_contents($argv[1]),true); if($v["subject"]!=="Preview contact" || !str_contains($v["html"],"<strong>Brief:</strong>")) exit(1);' "$tmp/body"
+submit admin '/admin/email-templates?template=contact_staff&preview=1' 422 --data-urlencode "_csrf=$token" \
+    --data-urlencode 'subject=Invalid preview' --data-urlencode 'body={{unknown}}'
+submit visitor /handlers/contact-submit.php 303 --data-urlencode "_csrf=$contact_token" --data-urlencode 'name==1+1' \
+    --data-urlencode 'email=logged@example.test' --data-urlencode 'company=Example Test' --data-urlencode 'type=Consultation' \
+    --data-urlencode 'message=<img src=x onerror=alert(1)> **not formatting**'
+grep -Fqi 'Location: /contact?sent=1' "$tmp/headers"
+get admin '/admin/contact-enquiries?q=logged&status=new&format=csv' >"$tmp/enquiries.csv"
+grep -Fq "'=1+1" "$tmp/enquiries.csv"
+! get admin '/admin/contact-enquiries?q=nomatch&format=csv' | grep -Fq 'logged@example.test' || exit 1
+submit admin /admin/contact-enquiries/1 303 -d "_csrf=$token&status=in_progress"
+get admin '/admin/contact-enquiries?status=in_progress' >"$tmp/enquiries"
+grep -Fq 'logged@example.test' "$tmp/enquiries"
+submit admin '/admin/email-templates?template=contact_staff' 303 --data-urlencode "_csrf=$token" -d 'action=save' \
+    --data-urlencode 'subject=New future subject' --data-urlencode 'body=**New future copy** {{message}}'
+php bin/smoke-contact-worker.php
 submit admin /admin/trainings/new 303 -F "_csrf=$token" -F 'title=Advanced Learning' -F 'status=draft' -F 'description=**Practical overview**' -F 'header_image=@assets/images/haleef-logo.webp'
 [[ "$(status /training/courses/advanced-learning)" == 404 ]]
 [[ "$(status /admin/preview/trainings/1)" == 302 ]]
@@ -270,4 +292,15 @@ get visitor "/training/booking/$(<"$tmp/manual-token")" >"$tmp/manual-booking"
 grep -q 'No automatic invoice was issued' "$tmp/manual-booking"
 get admin /admin/orders/3 >"$tmp/manual-order"
 grep -q 'Nothing is queued to send for this order' "$tmp/manual-order"
+for list in orders trainings editions trainers faqs agenda-email resources; do
+    [[ "$(status "/admin/$list?format=csv")" == 302 ]]
+    get admin "/admin/$list?format=csv" >"$tmp/$list.csv"
+    test -s "$tmp/$list.csv"
+done
+get admin '/admin/orders?format=csv&status=paid' >"$tmp/paid.csv"
+grep -Fq 'attendee@example.test' "$tmp/paid.csv"
+get admin '/admin/orders/1?format=csv&list=delegates&q=Casey' >"$tmp/delegates.csv"
+grep -Fq 'casey@example.test' "$tmp/delegates.csv"
+! grep -Fq 'attendee@example.test' "$tmp/delegates.csv" || exit 1
+php bin/smoke-email-migration.php
 printf 'Learning smoke checks passed.\n'
