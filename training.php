@@ -17,7 +17,7 @@ require __DIR__ . '/includes/header.php';
     <div class="training-hero-image"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=2200&q=88" alt="Professionals taking part in a collaborative training session"></div>
     <div class="training-hero-shade"></div>
     <div class="container training-hero-inner">
-        <span class="eyebrow">Haleef Corporate Training</span>
+        <span class="eyebrow">Haleef Global Learning Programs</span>
         <h1>Learning built for<br><em>the work ahead.</em></h1>
         <div class="training-hero-bottom">
             <p>Tailored programmes that connect expert knowledge, active participation and the real priorities of your organisation.</p>

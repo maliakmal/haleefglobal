@@ -44,7 +44,7 @@ require __DIR__ . '/includes/header.php';
                 <article class="course-card">
                     <div class="course-card-date"><strong><?= e(date('d', strtotime($course['starts_at']))) ?></strong><span><?= e(strtoupper(date('M Y', strtotime($course['starts_at'])))) ?></span></div>
                     <div class="course-card-copy">
-                        <div class="course-meta"><span><?= e(str_replace('_', ' ', $course['delivery_mode'])) ?></span><span><?= e($course['timezone']) ?></span><?php if ($course['cpd_available']): ?><span>CPD</span><?php endif; ?></div>
+                        <div class="course-meta"><span><?= e(str_replace('_', ' ', $course['delivery_mode'])) ?></span><span><?= e(\Haleef\Training\Editorial::timezoneLabel($course)) ?></span><?php if ($course['cpd_available']): ?><span>CPD</span><?php endif; ?></div>
                         <h3><?= e($course['title']) ?></h3>
                         <p><?= e((string) $course['short_description']) ?></p>
                     </div>

@@ -7,6 +7,7 @@ base=http://127.0.0.1:8097
 export PUBLIC_STORAGE_PATH="$tmp/public" PRIVATE_STORAGE_PATH="$tmp/private"
 php bin/migrate.php
 php bin/migrate.php
+php -r 'require "includes/bootstrap.php"; use Haleef\Training\Editorial; foreach ([["Europe/Berlin","2027-02-10","2027-02-11","CET"],["Europe/Berlin","2027-07-10","2027-07-11","CEST"],["Europe/Berlin","2027-03-27","2027-03-29","CET / CEST"],["Etc/UTC","2027-07-10","2027-07-11","UTC"],["America/New_York","2027-07-10","2027-07-11","EDT"],["America/Los_Angeles","2027-02-10","2027-02-11","PST"],["Asia/Dubai","2027-07-10","2027-07-11","GST"]] as [$timezone,$start,$end,$expected]) { if (Editorial::timezoneLabel(["timezone"=>$timezone,"starts_at"=>$start." 09:00:00","ends_at"=>$end." 09:00:00"]) !== $expected) throw new RuntimeException("Wrong time zone label for $timezone"); }'
 php -r 'require "includes/bootstrap.php"; use Haleef\Support\MoneyDisplay; foreach ([["USD",10,"US$10.00"],["EUR",1199,"€1,199.00"],["GBP",-1.5,"-£1.50"],["AED",120,"120.00\u{00A0}\u{2067}د.إ\u{2069}"],["CHF",10,"CHF 10.00"]] as [$code,$amount,$expected]) { if (MoneyDisplay::format($amount,$code) !== $expected) throw new RuntimeException("Wrong display for $code"); }'
 php -r 'require "includes/bootstrap.php"; $html=Haleef\Training\Markdown::render("**safe**\n\n- <img src=x>\n- [unsafe](javascript:alert(1))"); if (!str_contains($html,"<strong>safe</strong>") || !str_contains($html,"<ul>") || str_contains($html,"<img") || str_contains($html,"href=")) exit(1);'
 php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->prepare("INSERT INTO admin_users(name,email,password_hash,role) VALUES (?,?,?,?)")->execute(["Smoke","operator@example.test",password_hash("smoke-only-password",PASSWORD_DEFAULT),"administrator"]);'
@@ -37,6 +38,7 @@ printf 'WHATSAPP_NUMBER=+invalid\n' >"$tmp/whatsapp.env"
 php -r 'require "app/Autoload.php"; Haleef\Support\Env::load($argv[1]); require "includes/config.php"; require "includes/whatsapp-widget.php";' "$tmp/whatsapp.env" >"$tmp/widget"
 test ! -s "$tmp/widget"
 get visitor /training >"$tmp/no-agenda"
+grep -Fq 'Haleef Global Learning Programs' "$tmp/no-agenda"
 if grep -Fq 'href="#agenda"' "$tmp/no-agenda"; then exit 1; fi
 submit() {
     local cookie=$1 path=$2 expected=$3 actual
@@ -99,6 +101,7 @@ submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=shared"
 submit admin /admin/editions/1/faqs 303 -d "_csrf=$token&id=3&action=inherit"
 submit admin /admin/editions/1/edit 303 "${edition[@]}" -F 'publication_status=published'
 get visitor "$path" >"$tmp/page"
+grep -Fq '<span>CET</span>' "$tmp/page"
 grep -q 'Start delegate registration' "$tmp/page"
 grep -q 'Seats are limited' "$tmp/page"
 grep -Fq '€1,199.00' "$tmp/page"
@@ -132,6 +135,7 @@ grep -q 'Request the agenda' "$tmp/training"
 grep -Fq 'href="#agenda">Request the agenda' "$tmp/training"
 grep -Fq 'id="agenda"' "$tmp/training"
 get visitor /training/courses >"$tmp/calendar"
+grep -Fq '<span>CET</span>' "$tmp/calendar"
 grep -q 'Request the agenda' "$tmp/calendar"
 grep -Fq '€1,199.00' "$tmp/calendar"
 for i in 1 2; do
@@ -183,6 +187,7 @@ get visitor /training/trainers/second-instructor >"$tmp/no-company"
 if grep -Fq 'id="trainer-company-title"' "$tmp/no-company"; then exit 1; fi
 submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=TestBank&iban=TEST"
 get visitor /training/register/advanced-learning-2035 >"$tmp/register"
+grep -Fq '<span>CET</span>' "$tmp/register"
 grep -Fq '€1,199.00' "$tmp/register"
 grep -q 'Delegate Registration' "$tmp/register"
 grep -q '<h1>Advanced Learning Updated</h1>' "$tmp/register"
