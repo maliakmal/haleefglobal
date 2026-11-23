@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Support\{ContactEnquiries, Csrf, Database, WebSession};
+use Haleef\Support\{Analytics, ContactEnquiries, Csrf, Database, WebSession};
 
 $result = 'error=1';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
@@ -17,6 +17,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
             try {
                 ContactEnquiries::submit(Database::connection(), $_POST, SITE_EMAIL);
                 $result = 'sent=1';
+                if (Analytics::measurementId() !== '') {
+                    WebSession::start();
+                    $_SESSION['contact_saved_result'] = true;
+                    session_write_close();
+                }
             } catch (InvalidArgumentException) {
                 // Invalid form data; do not send or log the visitor's details.
             } catch (RuntimeException $error) {

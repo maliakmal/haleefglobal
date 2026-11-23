@@ -37,6 +37,7 @@ curl -fsS -D "$tmp/form-headers" -o /dev/null "$base/contact"
 grep -Ei '^Set-Cookie: haleef_session=.*httponly.*samesite=lax' "$tmp/form-headers" >/dev/null
 curl -fsS "$base/assets/js/cookies.js" >/dev/null
 curl -fsS "$base/assets/css/fonts.css" >/dev/null
+php -r 'require "includes/bootstrap.php"; use Haleef\Support\Analytics; foreach (["/contact?email=secret"=>"/contact","/training/courses/example/edition"=>"/training/courses/example/edition","/admin/preview/editions/1"=>"","/training/booking/secret"=>"","/training/invoice/secret"=>"","/training/register/edition"=>""] as $uri=>$expected) { $_SERVER["REQUEST_URI"]=$uri; if (Analytics::publicPath()!==$expected) throw new RuntimeException("Wrong analytics path scope"); } putenv("GA4_MEASUREMENT_ID=GTM-example"); if(Analytics::measurementId()!=="") exit(1); putenv("GA4_MEASUREMENT_ID=G-TEST123456"); if(Analytics::measurementId()!=="G-TEST123456") exit(1);'
 grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
 grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
 if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi

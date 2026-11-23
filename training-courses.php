@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/includes/config.php';
 
+use Haleef\Support\WebSession;
 use Haleef\Training\TrainingRepository;
 
 $pageTitle = 'Upcoming Training Programmes';
@@ -11,7 +12,6 @@ $currentPage = 'training';
 $databaseError = null;
 $agendaOptions = [];
 $agendaReturn = '/training/courses';
-header('Cache-Control: private, no-store');
 
 try {
     $repository = new TrainingRepository();
@@ -23,6 +23,9 @@ try {
     $databaseError = 'The programme calendar is being prepared. Please contact the Haleef team for upcoming dates.';
 }
 
+if ($agendaOptions) WebSession::start();
+else WebSession::resume();
+header('Cache-Control: private, no-store');
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="learning-page-hero">

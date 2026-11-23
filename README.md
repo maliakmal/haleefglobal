@@ -4,9 +4,17 @@ A lightweight, reusable PHP website for Haleef.
 
 ### Cookies and browser storage
 
-The public site has no optional analytics or advertising cookies. The notice is informational; its versioned local-storage record only remembers the visitor's dismissal. Ordinary public pages do not create a PHP session; form, booking and login flows use the essential session cookie where required. See `/cookies` for the published description. Fonts and stock images are served locally, and course media uploads come from Haleef's resource hosts.
+By default the public site has no optional analytics or advertising cookies. With no GA4 Measurement ID, the notice is informational and only remembers dismissal. Ordinary public pages do not create a PHP session; form, booking and login flows use the essential session cookie where required. See `/cookies` for the published description. Fonts and stock images are served locally, and course media uploads come from Haleef's resource hosts.
 
-Before adding analytics, pixels, or embeds that require consent, implement opt-in controls with equally accessible refusal and withdrawal, default the new categories to off, and gate the actual requests. Update the cookie page and browser storage version before enabling any new optional integration.
+### Optional Google Analytics 4
+
+1. In GA4, use **Admin → Data streams → Web** to create or open the Haleef web stream. Turn **Enhanced measurement off** so Google does not automatically collect URLs, form events or outbound link destinations. Keep Google Signals, ads personalisation and Google Ads destinations off. This integration is analytics-only.
+2. Set `GA4_MEASUREMENT_ID=G-...` in the production shared `.env` after checking the policy disclosures. Use the Measurement ID, not a GTM container ID or API secret. Do not paste a separate Google tag into a template. Leave the variable blank to disable the integration.
+3. Verify in a clean browser: before choice or after **Reject analytics**, there should be no Google tag or analytics requests and no new GA cookies. After **Accept analytics**, check Realtime for the test page view. Then withdraw through **Cookie settings** and verify subsequent requests are stopped.
+
+Tracked events are `page_view` on allowlisted public pages, `agenda_request` and `contact_enquiry` for successful form results, `begin_checkout` for a booking CTA click (not a purchase), and `whatsapp_click`. Do not treat opted-in counts as totals. Admin is the source of truth for bookings and enquiries. Private registration, booking, invoice, login and admin pages never load the tag. No form inputs, raw query strings, or referrer URLs are passed to the tag. Use allowlisted source labels (`newsletter`, `brevo`, `linkedin`, `google`, `facebook`, `instagram`) and medium labels (`email`, `social`, `organic`, `referral`) if adding campaign links.
+
+Before adding pixels or embeds that require consent, implement separate opt-in controls and update the disclosures. Do not add replay, keystroke capture or advertising tags to this analytics category.
 
 ## Run locally
 
