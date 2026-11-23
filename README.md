@@ -2,6 +2,12 @@
 
 A lightweight, reusable PHP website for Haleef.
 
+### Cookies and browser storage
+
+The public site has no optional analytics or advertising cookies. The notice is informational; its versioned local-storage record only remembers the visitor's dismissal. Ordinary public pages do not create a PHP session; form, booking and login flows use the essential session cookie where required. See `/cookies` for the published description. Fonts and stock images are served locally, and course media uploads come from Haleef's resource hosts.
+
+Before adding analytics, pixels, or embeds that require consent, implement opt-in controls with equally accessible refusal and withdrawal, default the new categories to off, and gate the actual requests. Update the cookie page and browser storage version before enabling any new optional integration.
+
 ## Run locally
 
 To enable the floating WhatsApp contact button, set `WHATSAPP_NUMBER` in `.env` (on production, edit the shared `/var/www/haleefglobal/shared/.env`). Use the full international number with country code, digits only. Leave it blank to hide the button. The configured number is public in the WhatsApp link.

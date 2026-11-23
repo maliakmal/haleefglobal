@@ -25,6 +25,18 @@ get() { curl -fsS -b "$tmp/$1" -c "$tmp/$1" "$base$2"; }
 csrf() { grep -o 'name="_csrf" value="[a-f0-9]*"' | sed -n '1p' | cut -d '"' -f4; }
 status() { curl -sS -o "$tmp/body" -w '%{http_code}' "$base$1"; }
 get visitor / >"$tmp/home"
+curl -fsS -D "$tmp/public-headers" -o "$tmp/fresh-home" "$base/"
+if grep -qi '^Set-Cookie:' "$tmp/public-headers"; then exit 1; fi
+grep -Fq 'Essential cookies only' "$tmp/fresh-home"
+grep -Fq 'href="/cookies"' "$tmp/fresh-home"
+if grep -Fq 'fonts.googleapis.com' "$tmp/fresh-home"; then exit 1; fi
+get visitor /cookies >"$tmp/cookies"
+grep -Fq 'haleef_session' "$tmp/cookies"
+grep -Fq 'Reset cookie notice' "$tmp/cookies"
+curl -fsS -D "$tmp/form-headers" -o /dev/null "$base/contact"
+grep -Ei '^Set-Cookie: haleef_session=.*httponly.*samesite=lax' "$tmp/form-headers" >/dev/null
+curl -fsS "$base/assets/js/cookies.js" >/dev/null
+curl -fsS "$base/assets/css/fonts.css" >/dev/null
 grep -Fq 'mailto:team@haleefglobal.com' "$tmp/home"
 grep -Fq 'mailto:ask@haleeflearning.com' "$tmp/home"
 if grep -Fq 'mailto:hello@thehaleef.com' "$tmp/home"; then exit 1; fi

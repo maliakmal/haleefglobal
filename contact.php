@@ -1,5 +1,6 @@
 <?php
 require __DIR__ . '/includes/config.php';
+\Haleef\Support\WebSession::start();
 $pageTitle = 'Plan an Event'; $currentPage = 'contact';
 $sent = isset($_GET['sent']); $error = isset($_GET['error']);
 $interest = $_GET['interest'] ?? '';

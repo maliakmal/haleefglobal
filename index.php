@@ -14,6 +14,7 @@ $pages = [
     'work' => 'work.php',
     'contact' => 'contact.php',
     'privacy' => 'privacy.php',
+    'cookies' => 'cookies.php',
     'terms' => 'terms.php',
     'health' => 'health.php',
 ];

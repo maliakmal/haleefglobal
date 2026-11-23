@@ -4,7 +4,9 @@ declare(strict_types=1);
 require __DIR__ . '/includes/config.php';
 
 use Haleef\Orders\{Invoices, OrderService};
+use Haleef\Support\WebSession;
 
+WebSession::resume();
 Invoices::privateHeaders();
 
 try {
