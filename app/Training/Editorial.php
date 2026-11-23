@@ -67,6 +67,19 @@ final class Editorial
         return self::date($edition, 'ends_at')->getTimestamp() < time();
     }
 
+    public static function dateRange(array $edition): string
+    {
+        $start = self::date($edition,'starts_at')->format('d M Y');
+        $end = self::date($edition,'ends_at')->format('d M Y');
+        return $start === $end ? $start : $start . ' – ' . $end;
+    }
+
+    public static function dailyTimeRange(array $edition): string
+    {
+        return self::date($edition,'starts_at')->format('H:i') . ' – '
+            . self::date($edition,'ends_at')->format('H:i') . ' ' . self::timezoneLabel($edition);
+    }
+
     public static function timezoneLabel(array $edition): string
     {
         $label = static function (\DateTimeImmutable $date): string {

@@ -69,7 +69,7 @@ $icon = static function (string $key): string {
     return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' . $p[$key] . '</svg>';
 };
 $canBook = $edition && $edition['registration_status'] === 'open' && !Editorial::ended($edition);
-$details = $edition ? Editorial::date($edition,'starts_at')->format('d M Y, H:i') . ' – ' . Editorial::date($edition,'ends_at')->format('d M Y, H:i') : '';
+require_once __DIR__ . '/includes/learning-schedule.php';
 require __DIR__ . '/includes/header.php';
 ?>
 <div class="learning-editorial">
@@ -78,7 +78,7 @@ require __DIR__ . '/includes/header.php';
 <?php if ($headerImage): ?><img class="learning-hero-art" src="<?= e($headerImage) ?>" alt=""><?php endif; ?>
 <div class="container learning-hero-layout"><div><nav class="learning-crumb"><a href="/training/courses">Courses</a> / <a href="/training/trainers">Trainers</a></nav>
 <span class="eyebrow"><?= e($edition ? $format[$edition['delivery_mode']] : 'Haleef Learning programme') ?></span><h1><?= e($training['title']) ?></h1><p><?= e((string)$training['short_description']) ?></p><?php if ($agendaOptions): ?><a class="learning-agenda-jump" href="#agenda">Request the agenda</a><?php endif; ?></div>
-<?php if ($edition): ?><aside class="learning-booking"><strong><?= e($details) ?></strong><span><?= e(\Haleef\Training\Editorial::timezoneLabel($edition)) ?></span><span><?= e($edition['venue_name'] ?: $format[$edition['delivery_mode']]) ?></span><b><?= e(\Haleef\Support\MoneyDisplay::format((float)$edition['price'], $edition['currency'])) ?></b>
+<?php if ($edition): ?><aside class="learning-booking"><?php learning_schedule($edition); ?><b><?= e(\Haleef\Support\MoneyDisplay::format((float)$edition['price'], $edition['currency'])) ?></b>
 <?php if ($training['cpd_available'] && $edition['cpd_points'] !== null): ?><span><?= e((string)$edition['cpd_points']) ?> CPD points</span><?php endif; ?>
 <?php if ($canBook && !$preview): ?><a class="learning-action learning-book-cta" data-analytics-click="begin_checkout" href="/training/register/<?= e($edition['slug']) ?>"><span>Book your seat</span><small>Register one or more delegates</small></a>
 <p class="learning-book-note"><?= $edition['capacity'] !== null ? 'Seats are limited. Register early to give your team time to complete payment.' : 'Register early to give yourself time to complete payment before the training starts.' ?></p>

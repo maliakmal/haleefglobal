@@ -21,7 +21,7 @@ final class AgendaEmail
 
     public function eligible(?int $trainingId = null, ?int $editionId = null): array
     {
-        $q = $this->pdo->prepare("SELECT e.id,e.slug,e.starts_at,e.timezone,t.title,t.slug AS training_slug,a.id AS asset_id,a.public_url
+        $q = $this->pdo->prepare("SELECT e.id,e.slug,e.starts_at,e.ends_at,e.timezone,e.delivery_mode,e.venue_name,t.title,t.slug AS training_slug,a.id AS asset_id,a.public_url
             FROM training_editions e JOIN trainings t ON t.id=e.training_id JOIN brands b ON b.id=t.brand_id
             JOIN media_assets a ON a.id=e.agenda_asset_id AND a.edition_id=e.id AND a.brand_id=b.id
             WHERE b.code='haleef-learning' AND t.status='published' AND e.publication_status='published'
