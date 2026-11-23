@@ -56,6 +56,14 @@ New bank-transfer orders issue one invoice for the whole group. The registration
 
 If a PDF is missing, open the specific booking under **Admin → Orders**. “No automatic invoice was issued” means no PDF exists, and changing browsers or starting the worker will not create one. If automatic issuance is disabled, run the preflight and check the shared environment setting before making a fresh test booking. If staff can download the PDF but the customer cannot, check the original booking session or the booking contact’s email.
 
+### Email templates and contact enquiries
+
+Use **Admin → Email templates** to edit Markdown and preview the HTML and plain-text versions using sample data. Existing agenda template copy is kept. New jobs save the versions rendered at the time of queueing; saving a template does not alter old jobs. Place agenda and enquiry URL placeholders on their own line. Sender, recipients, reply-to and invoice attachments are not template settings.
+
+Public contact form submissions are recorded in **Admin → Contact enquiries** and independently queued for a staff notification. Replies go to the visitor. The existing agenda or registration cron entry also drains contact notifications (either is sufficient); ensure one is running. The contact sender still uses `CONTACT_EMAIL_FROM` or falls back to `AGENDA_EMAIL_FROM`, with the existing Brevo key. There is no public auto-reply or marketing opt-in. Older enquiries sent before this release remain in the original mailbox; they were not previously stored by the app.
+
+Use the admin list filters for viewing subsets, and **Download CSV** to export all matching rows. Contact exports contain personal information and full messages; handle them as private records.
+
 Keep the `storage/private` directory outside the public web root where possible. Apache and the development router also deny direct access to internal directories, but server-level isolation is preferred.
 
 The Resources screen at `/admin/resources` stores public campaign files separately for Haleef Global and Haleef Learning and generates branded URLs. In production, point `PUBLIC_STORAGE_PATH` to the shared folder outside the release directories so deployments never remove uploaded files.

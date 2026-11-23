@@ -1,0 +1,11 @@
+.admin-list-filter{display:flex;align-items:end;gap:.8rem;flex-wrap:wrap;margin:1rem 0}
+.admin-list-filter label{display:grid;gap:.35rem;min-width:10rem}
+.admin-list-filter input,.admin-list-filter select{border:1px solid #dad5eb;border-radius:.45rem;padding:.6rem;background:#fff;color:inherit;font:inherit;width:100%}
+.admin-list-filter button,.admin-list-filter a{margin-bottom:.2rem}
+.email-editor-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:1.25rem}
+.email-editor-grid textarea,.email-editor-grid pre{font-family:ui-monospace,monospace;line-height:1.55}
+.email-editor-grid iframe{width:100%;height:26rem;border:1px solid #ded8ed;border-radius:.55rem;background:white}
+.email-editor-grid pre,.enquiry-message{white-space:pre-wrap;overflow-wrap:anywhere}
+.email-fields{display:flex;gap:.45rem;flex-wrap:wrap;margin:.7rem 0}
+.email-fields button{font-size:.8rem;padding:.35rem .5rem}
+@media(max-width:860px){.email-editor-grid{grid-template-columns:1fr}}

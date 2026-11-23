@@ -17,10 +17,12 @@ if ($afterFailure['status'] !== 'queued' || (int)$afterFailure['attempts'] !== 1
     throw new RuntimeException('Backoff did not work.');
 }
 $pdo->exec('UPDATE learning_agenda_email_jobs SET available_at=NOW()');
-$worker->process(static function (string $email, string $subject, string $body): string {
+$worker->process(static function (string $email, string $subject, string $body, ?string $html): string {
     if ($email !== 'lead@example.test' || $subject !== 'Agenda for Advanced Learning Updated'
         || !str_contains($body,'23 Feb 2035') || !str_contains($body,'https://resources.haleeflearning.com/agendas/')
-        || str_contains($body,'{{')) throw new LogicException('Email template was not rendered as expected.');
+        || str_contains($body,'{{') || !str_contains($html ?? '','<a href="https://resources.haleeflearning.com/agendas/')) {
+        throw new LogicException('Email template was not rendered as expected.');
+    }
     return 'smoke-provider-id';
 });
 $sent = $job()[0];

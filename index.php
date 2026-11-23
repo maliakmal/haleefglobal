@@ -33,6 +33,17 @@ if ($route === 'admin/agenda-email') {
     exit;
 }
 
+if ($route === 'admin/email-templates') {
+    require __DIR__ . '/admin/email-templates.php';
+    exit;
+}
+
+if (preg_match('#^admin/contact-enquiries(?:/([1-9][0-9]*))?$#D', $route, $matches)) {
+    $enquiryId = (int)($matches[1] ?? 0);
+    require __DIR__ . '/admin/contact-enquiries.php';
+    exit;
+}
+
 if (preg_match('#^services/([a-z0-9-]+)$#', $route, $matches)) {
     $_GET['service'] = $matches[1];
     require __DIR__ . '/service.php';

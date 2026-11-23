@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Haleef\Training;
 
-use Haleef\Support\Env;
+use Haleef\Support\{EmailTemplates, Env};
 use PDO;
 use RuntimeException;
 
@@ -72,11 +72,11 @@ final class AgendaEmail
                     $q = $this->pdo->prepare('SELECT COUNT(*) FROM learning_agenda_email_jobs WHERE source_hash=? AND created_at>DATE_SUB(NOW(), INTERVAL 1 HOUR)');
                     $q->execute([$sourceHash]);
                     if ((int)$q->fetchColumn() >= 12) throw new RuntimeException('Too many agenda requests. Please try again later.');
-                    $tokens = ['{{training_title}}'=>$agenda['title'],'{{edition_date}}'=>Editorial::date($agenda,'starts_at')->format('d M Y'),'{{agenda_url}}'=>$agenda['public_url']];
-                    $template = $this->template();
-                    $subject = (string) preg_replace('/[\r\n]+/', ' ', strtr($template['subject'],$tokens));
-                    $this->pdo->prepare('INSERT INTO learning_agenda_email_jobs (interest_id,source_hash,subject,body) VALUES (?,?,?,?)')
-                        ->execute([$interestId,$sourceHash,mb_substr($subject,0,240,'UTF-8'),strtr($template['body'],$tokens)]);
+                    $copy = EmailTemplates::sendCopy($this->pdo,'agenda_request',[
+                        'training_title'=>$agenda['title'],'edition_date'=>Editorial::date($agenda,'starts_at')->format('d M Y'),'agenda_url'=>$agenda['public_url'],
+                    ]);
+                    $this->pdo->prepare('INSERT INTO learning_agenda_email_jobs (interest_id,source_hash,subject,body,html_body) VALUES (?,?,?,?,?)')
+                        ->execute([$interestId,$sourceHash,$copy['subject'],$copy['text'],$copy['html']]);
                 }
             }
             $this->pdo->commit();
@@ -98,7 +98,7 @@ final class AgendaEmail
             foreach ($jobs as $job) {
                 $attempt = (int)$job['attempts'] + 1;
                 try {
-                    $providerId = $transport($job['email'],$job['subject'],$job['body']);
+                    $providerId = $transport($job['email'],$job['subject'],$job['body'],$job['html_body'] ?? null);
                 } catch (RuntimeException $error) {
                     $delay = [5,30,120,360,720][min(4,$attempt-1)];
                     $this->pdo->prepare("UPDATE learning_agenda_email_jobs SET status=?,attempts=?,last_error=?,
@@ -115,14 +115,16 @@ final class AgendaEmail
         }
     }
 
-    public static function sendBrevo(string $email, string $subject, string $body): string
+    public static function sendBrevo(string $email, string $subject, string $body, ?string $html = null): string
     {
         $api = curl_init('https://api.brevo.com/v3/smtp/email');
         curl_setopt_array($api, [
             CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true, CURLOPT_CONNECTTIMEOUT=>5, CURLOPT_TIMEOUT=>15,
             CURLOPT_HTTPHEADER=>['accept: application/json','content-type: application/json','api-key: ' . Env::get('BREVO_API_KEY')],
             CURLOPT_POSTFIELDS=>json_encode(['sender'=>['email'=>Env::get('AGENDA_EMAIL_FROM'),'name'=>Env::get('AGENDA_EMAIL_FROM_NAME') ?: 'Haleef Learning'],
-                'to'=>[['email'=>$email]],'subject'=>$subject,'textContent'=>$body,'tags'=>['haleef-agenda']], JSON_THROW_ON_ERROR),
+                'to'=>[['email'=>$email]],'subject'=>$subject,'textContent'=>$body,
+                'htmlContent'=>$html ?? ('<html><body><p>'.nl2br(htmlspecialchars($body,ENT_QUOTES | ENT_SUBSTITUTE,'UTF-8')).'</p></body></html>'),
+                'tags'=>['haleef-agenda']], JSON_THROW_ON_ERROR),
         ]);
         $body = curl_exec($api);
         $status = (int)curl_getinfo($api,CURLINFO_RESPONSE_CODE);
