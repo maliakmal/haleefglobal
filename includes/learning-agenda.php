@@ -8,6 +8,7 @@ $agendaNotice = $_SESSION['agenda_notice'] ?? null;
 if (($agendaNotice['path'] ?? null) !== $agendaReturn) $agendaNotice = null;
 if ($agendaNotice) unset($_SESSION['agenda_notice']);
 if (empty($agendaOptions) && empty($agendaInPreview) && !$agendaNotice) return;
+require_once __DIR__ . '/learning-schedule.php';
 ?>
 <section id="agenda" class="container learning-band" aria-labelledby="agenda-heading" data-reveal>
 <div class="learning-agenda">
@@ -21,9 +22,10 @@ if (empty($agendaOptions) && empty($agendaInPreview) && !$agendaNotice) return;
     <?php if ($agendaOptions): ?><form method="post" action="/training/agenda-request"><?= Csrf::field() ?>
         <input type="hidden" name="return_path" value="<?= e($agendaReturn) ?>">
         <?php if (count($agendaOptions) === 1): ?><input type="hidden" name="edition_id" value="<?= (int)$agendaOptions[0]['id'] ?>">
-        <p class="learning-agenda-edition"><?= e($agendaOptions[0]['title']) ?> · <?= e(Editorial::date($agendaOptions[0],'starts_at')->format('d M Y')) ?></p>
+        <p class="learning-agenda-edition"><?= e($agendaOptions[0]['title']) ?></p>
+        <?php learning_schedule($agendaOptions[0]); ?>
         <?php else: ?><label for="agenda-edition">Course edition</label><select id="agenda-edition" name="edition_id" required><option value="">Select an edition</option>
-        <?php foreach ($agendaOptions as $option): ?><option value="<?= (int)$option['id'] ?>"><?= e($option['title'] . ' · ' . Editorial::date($option,'starts_at')->format('d M Y')) ?></option><?php endforeach; ?></select><?php endif; ?>
+        <?php foreach ($agendaOptions as $option): ?><option value="<?= (int)$option['id'] ?>"><?= e($option['title'] . ' · ' . Editorial::dateRange($option)) ?></option><?php endforeach; ?></select><?php endif; ?>
         <label for="agenda-email">Email address</label><input id="agenda-email" name="email" type="email" autocomplete="email" maxlength="254" required>
         <label class="honeypot" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
         <button class="learning-action" type="submit"><?= AgendaEmail::configured() ? 'Email me the agenda' : 'Get the agenda' ?></button>
