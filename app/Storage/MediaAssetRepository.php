@@ -8,6 +8,10 @@ use RuntimeException;
 
 final class MediaAssetRepository
 {
+    public const PAGE_SIZE = 50;
+    public const CATEGORIES = ['agenda'=>'Agenda','brochure'=>'Brochure','trainer_profile'=>'Trainer profile','course_material'=>'Course material','other'=>'Other public resource'];
+    public const FILE_TYPES = ['application/pdf'=>'PDF','image/jpeg'=>'JPG','image/png'=>'PNG','image/webp'=>'WebP'];
+
     public function __construct(private readonly PDO $pdo)
     {
     }
@@ -17,15 +21,46 @@ final class MediaAssetRepository
         return $this->pdo->query('SELECT id, code, name, resource_domain FROM brands ORDER BY name')->fetchAll();
     }
 
-    public function all(): array
+    public function replacements(): array
     {
         return $this->pdo->query(
-            'SELECT ma.*, b.code AS brand_code, b.name AS brand_name, au.name AS creator_name
-             FROM media_assets ma
-             INNER JOIN brands b ON b.id = ma.brand_id
-             LEFT JOIN admin_users au ON au.id = ma.created_by
-             ORDER BY ma.created_at DESC'
+            'SELECT ma.id, ma.title, b.name AS brand_name
+             FROM media_assets ma INNER JOIN brands b ON b.id = ma.brand_id
+             WHERE ma.is_published = 1 ORDER BY ma.created_at DESC, ma.id DESC'
         )->fetchAll();
+    }
+
+    public function listing(string $search, string $category, string $type, int $page): array
+    {
+        $conditions = [];
+        $params = [];
+        if ($search !== '') {
+            $conditions[] = "ma.title LIKE :search ESCAPE '!'";
+            $params['search'] = '%' . strtr($search, ['!'=>'!!','%'=>'!%','_'=>'!_']) . '%';
+        }
+        if ($category !== '') {
+            $conditions[] = 'ma.asset_type = :category';
+            $params['category'] = $category;
+        }
+        if ($type !== '') {
+            $conditions[] = 'ma.mime_type = :type';
+            $params['type'] = $type;
+        }
+        $from = ' FROM media_assets ma INNER JOIN brands b ON b.id = ma.brand_id'
+            . ($conditions ? ' WHERE ' . implode(' AND ', $conditions) : '');
+        $count = $this->pdo->prepare('SELECT COUNT(*)' . $from);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+        $last = max(1, (int) ceil($total / self::PAGE_SIZE));
+        $page = min(max(1, $page), $last);
+        $statement = $this->pdo->prepare(
+            'SELECT ma.*, b.name AS brand_name' . $from . ' ORDER BY ma.created_at DESC, ma.id DESC LIMIT :limit OFFSET :offset'
+        );
+        foreach ($params as $name => $value) $statement->bindValue(':' . $name, $value, PDO::PARAM_STR);
+        $statement->bindValue(':limit', self::PAGE_SIZE, PDO::PARAM_INT);
+        $statement->bindValue(':offset', ($page - 1) * self::PAGE_SIZE, PDO::PARAM_INT);
+        $statement->execute();
+        return ['rows'=>$statement->fetchAll(), 'total'=>$total, 'page'=>$page, 'last'=>$last];
     }
 
     public function find(int $id): ?array

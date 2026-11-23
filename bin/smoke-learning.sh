@@ -155,6 +155,21 @@ grep -Fq 'Email,Programme,Edition,' "$tmp/lead-csv"
 grep -Fq 'lead@example.test,' "$tmp/lead-csv"
 get admin /admin/resources >"$tmp/resources"
 grep -q 'resources.haleeflearning.com/agendas/' "$tmp/resources"
+php -r 'require "includes/bootstrap.php"; $pdo=Haleef\Support\Database::connection(); $q=$pdo->prepare("INSERT INTO media_assets (brand_id,title,asset_type,storage_disk,storage_path,original_name,mime_type,size_bytes,is_published) SELECT id,?,?,?,?,?,?,1,1 FROM brands WHERE code=?"); for($i=1;$i<=51;$i++) $q->execute(["Pagination pack $i","course_material","public_local","fixture-$i.png","fixture-$i.png","image/png","haleef-learning"]); $q->execute(["Pagination pack 100%","brochure","public_local","fixture.pdf","fixture.pdf","application/pdf","haleef-learning"]);'
+filter='/admin/resources?q=ination%20pack&category=course_material&type=image%2Fpng'
+get admin "$filter" >"$tmp/resources-first"
+[[ "$(grep -o 'data-resource-row' "$tmp/resources-first" | wc -l)" -eq 50 ]]
+grep -Fq 'Showing 1–50 of 51 files' "$tmp/resources-first"
+grep -Fq 'type=image%2Fpng&amp;page=2#resources-list' "$tmp/resources-first"
+get admin "$filter&page=2" >"$tmp/resources-second"
+[[ "$(grep -o 'data-resource-row' "$tmp/resources-second" | wc -l)" -eq 1 ]]
+grep -Fq 'Showing 51–51 of 51 files' "$tmp/resources-second"
+grep -Fq '</svg>PNG' "$tmp/resources-second"
+get admin '/admin/resources?q=%25&type=application%2Fpdf' >"$tmp/resources-literal"
+[[ "$(grep -o 'data-resource-row' "$tmp/resources-literal" | wc -l)" -eq 1 ]]
+grep -Fq '</svg>PDF' "$tmp/resources-literal"
+get admin '/admin/resources?q=%25&category=course_material' >"$tmp/resources-empty"
+grep -Fq 'No files match these filters.' "$tmp/resources-empty"
 get visitor /training/trainers/test-trainer >"$tmp/trainer"
 grep -Fq 'class="site-header site-header-solid"' "$tmp/trainer"
 grep -q "$path" "$tmp/trainer"
