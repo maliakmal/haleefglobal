@@ -38,6 +38,22 @@ The repository now includes the first training-management foundation: database-b
 
 Run `php bin/expire-unpaid-orders.php` from cron at least hourly. It releases seats held by unpaid bank-transfer orders after their configured payment deadline.
 
+### Bank-transfer invoices and registration emails
+
+Deploy through Actions; it bundles the locked Composer dependencies and the deploy script applies the additive migration. For local development, run `composer install`. The PDF renderer needs PHP DOM, GD and Mbstring on both the web and CLI runtimes (e.g. `php8.3-xml`, `php8.3-gd`, `php8.3-mbstring` on the droplet).
+
+1. Verify the beneficiary, bank, IBAN, SWIFT/BIC, payment window and instructions in **Admin → Payment methods**. The bank details are taken from that configuration and copied into each invoice at issue time.
+2. In `/var/www/haleefglobal/shared/.env`, set the approved `INVOICE_ISSUER_NAME`, `INVOICE_ISSUER_ADDRESS` and, if applicable, `INVOICE_ISSUER_LICENSE`. Set `INVOICE_REPLY_TO` and use the existing `BREVO_API_KEY` with a verified `REGISTRATION_EMAIL_FROM` (defaults to `AGENDA_EMAIL_FROM`). The sample's bank details, invoice numbering and company seal are not production settings. This generates a payment request, not a VAT invoice or paid receipt. Confirm the approved invoice format with your accountant before activating.
+3. Run `sudo -u haleef-deploy /usr/bin/php /var/www/haleefglobal/current/bin/send-registration-emails.php --check`. It sends nothing. Then add the following via `sudo crontab -u haleef-deploy -e`, preserving existing entries:
+
+   ```cron
+   * * * * * /usr/bin/php /var/www/haleefglobal/current/bin/send-registration-emails.php >> /var/www/haleefglobal/shared/storage/logs/registration-email.log 2>&1
+   ```
+
+4. Set `BANK_TRANSFER_INVOICES_ENABLED=1` in the shared environment file. Make one test booking to an inbox you control and check the PDF, bank instructions, delivery and admin status.
+
+New bank-transfer orders issue one invoice for the whole group. The registration session and signed-in admins can download it; there is no publicly served invoice file. Each delegate receives a separate email. Only the first delegate (the booking contact) receives the PDF. Admin Orders shows queue status and lets admins retry failed pending-payment notifications. PDFs are stored in MariaDB; protect database backups as customer data. Existing orders are not backfilled or emailed automatically.
+
 Keep the `storage/private` directory outside the public web root where possible. Apache and the development router also deny direct access to internal directories, but server-level isolation is preferred.
 
 The Resources screen at `/admin/resources` stores public campaign files separately for Haleef Global and Haleef Learning and generates branded URLs. In production, point `PUBLIC_STORAGE_PATH` to the shared folder outside the release directories so deployments never remove uploaded files.

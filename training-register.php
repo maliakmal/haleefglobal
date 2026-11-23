@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/includes/config.php';
 
-use Haleef\Orders\{Delegates, OrderService};
+use Haleef\Orders\{Delegates, Invoices, OrderService};
 use Haleef\Payments\PaymentMethodRegistry;
 use Haleef\Support\{Csrf, MoneyDisplay};
 use Haleef\Training\{Editorial, TrainingRepository};
@@ -30,6 +30,7 @@ try {
             if ($remove !== false && isset($posted[$remove])) array_splice($posted,$remove,1);
         } else {
             $order = (new OrderService())->create($edition, $_POST);
+            if (!empty($order['has_invoice'])) Invoices::grant($order);
             header('Location: /training/booking/' . $order['public_token']);
             exit;
         }
@@ -90,6 +91,11 @@ require __DIR__ . '/includes/header.php';
                 <noscript><button class="delegate-add" type="submit" name="add_delegate" value="1" formnovalidate <?= $quantity >= Delegates::LIMIT ? 'disabled' : '' ?>>Add another delegate</button></noscript>
                 <template data-delegate-template><?php $renderDelegate('__INDEX__',[]); ?></template>
                 <p class="delegate-limit" data-delegate-status role="status"></p>
+                <?php if (Invoices::enabled() && in_array('bank_transfer', array_column($methods, 'code'), true)): ?>
+                <fieldset class="delegate-card"><legend>Billing details</legend><div class="delegate-fields">
+                    <label>Billing address (optional)<textarea name="billing_address" rows="3" maxlength="500" autocomplete="billing street-address"><?= e(is_string($_POST['billing_address'] ?? null) ? $_POST['billing_address'] : '') ?></textarea></label>
+                </div><p>The bank transfer invoice uses the first delegate’s company and contact details.</p></fieldset>
+                <?php endif; ?>
                 <h2>Payment method</h2>
                 <div class="payment-options"><?php foreach ($methods as $index=>$method): ?>
                     <label class="payment-option"><input type="radio" name="payment_method" value="<?= e($method['code']) ?>" <?= ($selectedMethod !== '' ? $method['code'] === $selectedMethod : $index === 0) ? 'checked' : '' ?> required><span><b><?= e($method['label']) ?></b><small><?= $method['adapter']->supportsOnlineCheckout() ? 'Continue to secure online payment.' : 'Reserve the seats, then follow the bank-transfer instructions.' ?></small></span></label>

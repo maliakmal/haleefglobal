@@ -5,6 +5,8 @@ set -euo pipefail
 tmp="$(mktemp -d)"
 base=http://127.0.0.1:8097
 export PUBLIC_STORAGE_PATH="$tmp/public" PRIVATE_STORAGE_PATH="$tmp/private"
+export BANK_TRANSFER_INVOICES_ENABLED=1 INVOICE_ISSUER_NAME='Haleef Example LLC' INVOICE_ISSUER_ADDRESS='Example Street, UAE'
+export REGISTRATION_EMAIL_FROM=registration@example.test BREVO_API_KEY=smoke-never-sent
 php bin/migrate.php
 php bin/migrate.php
 BREVO_API_KEY=fixture CONTACT_EMAIL_FROM=verified@example.test AGENDA_EMAIL_FROM=agenda@example.test php -r 'require "includes/config.php"; $input=["name"=>"Test Visitor","email"=>"visitor@example.test","company"=>"Example Org","type"=>"Training","location"=>"Dubai","message"=>"Please tell me about training."]; $assert=static function ($key,$mail) { if ($key!=="fixture" || $mail["sender"]["email"]!=="verified@example.test" || $mail["to"]!==[["email"=>"team@haleefglobal.com"]] || $mail["replyTo"]!==["email"=>"visitor@example.test"] || !str_contains($mail["textContent"],"Please tell me about training.")) throw new RuntimeException("Wrong contact email payload"); }; Haleef\Support\ContactEmail::send($input,SITE_EMAIL,$assert); putenv("CONTACT_EMAIL_FROM="); Haleef\Support\ContactEmail::send($input,SITE_EMAIL,static function ($key,$mail) { if ($mail["sender"]["email"]!=="agenda@example.test") throw new RuntimeException("Sender fallback failed"); });'
@@ -221,17 +223,35 @@ group=("${args[@]}")
 delegate_args 2 Harper harper@example.test
 submit visitor "$register" 200 "${common[@]}" "${args[@]}"
 grep -q 'There are not enough seats for your group' "$tmp/body"
-submit visitor "$register" 302 "${common[@]}" "${group[@]}"
+submit visitor "$register" 302 "${common[@]}" "${group[@]}" -F 'billing_address=12 Fixture Street'
 booking="$(awk 'tolower($1)=="location:" {gsub(/\r/,"",$2);print $2}' "$tmp/headers")"
 [[ "$booking" == /training/booking/* ]]
 get visitor "$booking" >"$tmp/booking"
 grep -Fq '2 delegates · €2,398.00 total' "$tmp/booking"
 ! grep -q 'zoom.us/j/' "$tmp/booking" || exit 1
+invoice="$(grep -oE '/training/invoice/HL-[0-9]+-[0-9]+' "$tmp/booking")"
+[[ "$(status "$invoice")" == 404 ]]
+[[ "$(status /admin/orders/1/invoice)" == 302 ]]
+[[ "$(status /handlers/invoice-download.php)" == 404 ]]
+[[ "$(status /vendor/autoload.php)" == 404 ]]
+curl -fsS -b "$tmp/visitor" -D "$tmp/invoice-headers" -o "$tmp/invoice.pdf" "$base$invoice"
+grep -qi '^Cache-Control: private, no-store' "$tmp/invoice-headers"
+grep -qi '^Content-Type: application/pdf' "$tmp/invoice-headers"
+get admin /admin/orders/1/invoice >"$tmp/admin-invoice.pdf"
+cmp "$tmp/invoice.pdf" "$tmp/admin-invoice.pdf"
+get other "$booking" >"$tmp/other-booking"
+! grep -q 'Download invoice PDF' "$tmp/other-booking" || exit 1
+php bin/smoke-registration-email.php "$tmp/invoice.pdf"
+submit admin /admin/payment-methods 302 -d "_csrf=$token&enabled=1&account_name=Haleef&bank_name=UpdatedBank&iban=UPDATED"
+get visitor "$booking" >"$tmp/snapshot-booking"
+grep -Fq 'TestBank' "$tmp/snapshot-booking"
+! grep -Fq 'UpdatedBank' "$tmp/snapshot-booking" || exit 1
 submit admin /admin/orders/1 302 -F "_csrf=$token" -F 'reference=SMOKE' -F 'amount=2398' -F "evidence=@$tmp/agenda.pdf"
 get visitor "$booking" >"$tmp/booking"
 grep -q 'Join on Zoom' "$tmp/booking"
 get admin /admin/orders/1 >"$tmp/order"
 grep -q 'Taylor Example' "$tmp/order"
 grep -q 'Casey Example' "$tmp/order"
+grep -q 'Invoice and registration emails' "$tmp/order"
 [[ "$(grep -o 'status-confirmed' "$tmp/order" | wc -l)" == 2 ]]
 printf 'Learning smoke checks passed.\n'

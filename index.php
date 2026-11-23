@@ -71,6 +71,13 @@ if (preg_match('#^training/booking/([a-f0-9]{64})$#', $route, $matches)) {
     exit;
 }
 
+if (preg_match('#^training/invoice/(HL-[0-9]{4}-[0-9]+)$#D', $route, $matches)) {
+    $invoiceAdmin = false;
+    $invoiceReference = $matches[1];
+    require __DIR__ . '/handlers/invoice-download.php';
+    exit;
+}
+
 if ($route === 'admin/login') {
     require __DIR__ . '/admin/login.php';
     exit;
@@ -113,6 +120,13 @@ if ($route === 'admin/orders') {
 if (preg_match('#^admin/orders/([0-9]+)$#', $route, $matches)) {
     $_GET['order_id'] = $matches[1];
     require __DIR__ . '/admin/order.php';
+    exit;
+}
+
+if (preg_match('#^admin/orders/([1-9][0-9]*)/invoice$#D', $route, $matches)) {
+    $invoiceAdmin = true;
+    $invoiceReference = (int)$matches[1];
+    require __DIR__ . '/handlers/invoice-download.php';
     exit;
 }
 
