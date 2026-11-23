@@ -16,10 +16,9 @@ $currentPage = $currentPage ?? 'home';
     <meta property="og:type" content="website">
     <?php if (!empty($shareUrl)): ?><link rel="canonical" href="<?= e($shareUrl) ?>"><meta property="og:url" content="<?= e($shareUrl) ?>"><?php endif; ?>
     <?php if (!empty($shareImage) && filter_var($shareImage, FILTER_VALIDATE_URL)): ?><meta property="og:image" content="<?= e($shareImage) ?>"><?php endif; ?>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/css/site.css?v=2">
+    <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
+    <link rel="stylesheet" href="/assets/css/site.css?v=3">
+    <link rel="stylesheet" href="/assets/css/cookies.css?v=1">
     <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=8"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
 </head>
 <body class="page-<?= e($currentPage) ?>">

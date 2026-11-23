@@ -10,11 +10,13 @@ try {
     error_log($error->getMessage());
     $agendaOptions = [];
 }
+if ($agendaOptions) \Haleef\Support\WebSession::start();
+else \Haleef\Support\WebSession::resume();
 header('Cache-Control: private, no-store');
 require __DIR__ . '/includes/header.php';
 ?>
 <section class="training-hero">
-    <div class="training-hero-image"><img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=2200&q=88" alt="Professionals taking part in a collaborative training session"></div>
+    <div class="training-hero-image"><img src="/assets/images/training-session.webp" alt="Professionals taking part in a collaborative training session"></div>
     <div class="training-hero-shade"></div>
     <div class="container training-hero-inner">
         <span class="eyebrow">Haleef Global Learning Programs</span>

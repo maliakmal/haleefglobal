@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Haleef\Admin;
 
-use Haleef\Support\Database;
+use Haleef\Support\{Database, WebSession};
 
 final class AdminAuth
 {
@@ -37,6 +37,7 @@ final class AdminAuth
 
     public static function user(): ?array
     {
+        WebSession::start();
         $id = (int) ($_SESSION['admin_user_id'] ?? 0);
         if ($id < 1) {
             return null;
@@ -60,6 +61,7 @@ final class AdminAuth
 
     public static function logout(): void
     {
+        WebSession::start();
         unset($_SESSION['admin_user_id']);
         session_regenerate_id(true);
     }

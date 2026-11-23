@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Support\{Csrf, Database};
+use Haleef\Support\{Csrf, Database, WebSession};
 use Haleef\Training\AgendaEmail;
 
 header('Cache-Control: private, no-store');
@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Allow: POST');
     exit;
 }
+WebSession::start();
 $return = is_string($_POST['return_path'] ?? null) ? $_POST['return_path'] : '';
 if (!preg_match('~^/training(?:/courses(?:/[a-z0-9-]+){0,2})?$~D', $return)) $return = '/training';
 $value = static fn($key) => trim(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');

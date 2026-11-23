@@ -2,10 +2,11 @@
 declare(strict_types=1);
 require dirname(__DIR__) . '/includes/config.php';
 
-use Haleef\Support\{ContactEnquiries, Csrf, Database};
+use Haleef\Support\{ContactEnquiries, Csrf, Database, WebSession};
 
 $result = 'error=1';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['website'] ?? '') === '') {
+    WebSession::start();
     $token = is_string($_POST['_csrf'] ?? null) ? $_POST['_csrf'] : null;
     if ($token && hash_equals(Csrf::token(), $token)) {
         $now = time();
