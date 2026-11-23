@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 WebSession::start();
+header('Cache-Control: private, no-store');
 $return = is_string($_POST['return_path'] ?? null) ? $_POST['return_path'] : '';
 if (!preg_match('~^/training(?:/courses(?:/[a-z0-9-]+){0,2})?$~D', $return)) $return = '/training';
 $value = static fn($key) => trim(is_string($_POST[$key] ?? null) ? $_POST[$key] : '');

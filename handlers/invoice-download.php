@@ -7,8 +7,8 @@ use Haleef\Admin\AdminAuth;
 use Haleef\Orders\Invoices;
 use Haleef\Support\{Database, WebSession};
 
-Invoices::privateHeaders();
 if (!isset($invoiceAdmin, $invoiceReference)) {
+    Invoices::privateHeaders();
     http_response_code(404);
     exit;
 }
@@ -19,6 +19,7 @@ if ($invoiceAdmin) {
     WebSession::resume();
     $orderId = Invoices::sessionOrderId($invoiceReference);
 }
+Invoices::privateHeaders();
 if (!$orderId) {
     http_response_code(404);
     exit;

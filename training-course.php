@@ -8,7 +8,6 @@ use Haleef\Training\{AgendaEmail, Editorial, Faqs, Markdown, TrainingRepository}
 
 $preview = isset($previewId);
 if ($preview) AdminAuth::requireUser();
-header('Cache-Control: private, no-store');
 if ($preview) header('X-Robots-Tag: noindex, nofollow');
 $pdo = Database::connection();
 $edition = null;
@@ -47,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') { http_response_code(405); header('Al
 $agendaOptions = $preview ? [] : (new AgendaEmail($pdo))->eligible((int)$training['id'], $edition ? (int)$edition['id'] : null);
 if ($agendaOptions) WebSession::start();
 else WebSession::resume();
+header('Cache-Control: private, no-store');
 $agendaInPreview = $preview && !empty($edition['agenda_asset_id']);
 $agendaReturn = $courseUrl . ($edition ? '/' . $edition['slug'] : '');
 $pageTitle = $training['title'];

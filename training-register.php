@@ -9,7 +9,6 @@ use Haleef\Support\WebSession;
 use Haleef\Support\{Csrf, MoneyDisplay};
 use Haleef\Training\{Editorial, TrainingRepository};
 
-header('Cache-Control: private, no-store');
 $error = null;
 $edition = null;
 $methods = [];
@@ -21,6 +20,7 @@ try {
     $methods = (new PaymentMethodRegistry())->enabledForBrand((int) $edition['brand_id']);
     if (!$methods) throw new RuntimeException('Registration payments are not configured yet. Please contact Haleef.');
     WebSession::start();
+    header('Cache-Control: private, no-store');
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Csrf::verify(is_string($_POST['_csrf'] ?? null) ? $_POST['_csrf'] : null);
