@@ -25,6 +25,8 @@ jobs:
         run: find . -type f -name '*.php' -not -path './.git/*' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
       - name: Reject committed secrets
         run: test ! -f .env
+      - name: Check analytics consent and event privacy
+        run: node bin/smoke-analytics.cjs
 
   learning-smoke:
     runs-on: ubuntu-24.04

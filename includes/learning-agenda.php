@@ -16,7 +16,7 @@ if (empty($agendaOptions) && empty($agendaInPreview) && !$agendaNotice) return;
         <a href="/privacy">Privacy policy</a></div>
     <?php if (!empty($agendaInPreview)): ?><p>Download form disabled in preview.</p>
     <?php else: ?><div>
-    <?php if ($agendaNotice): ?><p role="<?= $agendaNotice['ok'] ? 'status' : 'alert' ?>"><?= e($agendaNotice['message']) ?></p>
+    <?php if ($agendaNotice): ?><p role="<?= $agendaNotice['ok'] ? 'status' : 'alert' ?>"<?= $agendaNotice['ok'] ? ' data-analytics-result="agenda_request"' : '' ?>><?= e($agendaNotice['message']) ?></p>
     <?php if (!empty($agendaNotice['download'])): ?><p><a class="learning-action" href="<?= e($agendaNotice['download']) ?>">Download the PDF</a></p><?php endif; endif; ?>
     <?php if ($agendaOptions): ?><form method="post" action="/training/agenda-request"><?= Csrf::field() ?>
         <input type="hidden" name="return_path" value="<?= e($agendaReturn) ?>">
