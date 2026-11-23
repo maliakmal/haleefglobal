@@ -25,18 +25,25 @@ final class OrderService
         $paymentCode = is_string($input['payment_method'] ?? null) ? trim($input['payment_method']) : '';
 
         $method = $this->paymentMethods->enabledMethod((int) $edition['brand_id'], $paymentCode);
+        $issueInvoice = $paymentCode === 'bank_transfer' && Invoices::enabled();
+        $billingAddress = $issueInvoice ? Invoices::billingAddress($input['billing_address'] ?? '') : '';
+        if ($issueInvoice && !RegistrationEmail::configured()) {
+            error_log('Bank transfer invoices enabled without a Brevo registration sender.');
+            throw new RuntimeException('Bank transfer registration is temporarily unavailable. Please contact Haleef.');
+        }
         $publicToken = bin2hex(random_bytes(32));
         $pdo = Database::connection();
         $pdo->beginTransaction();
 
         try {
-            $editionLock = $pdo->prepare('SELECT e.*, t.status AS training_status FROM training_editions e JOIN trainings t ON t.id=e.training_id WHERE e.id = ? FOR UPDATE');
+            $editionLock = $pdo->prepare('SELECT e.*, t.status AS training_status, t.title AS training_title FROM training_editions e JOIN trainings t ON t.id=e.training_id WHERE e.id = ? FOR UPDATE');
             $editionLock->execute([$edition['id']]);
             $lockedEdition = $editionLock->fetch();
             if (!$lockedEdition || $lockedEdition['registration_status'] !== 'open' || $lockedEdition['publication_status'] !== 'published' || $lockedEdition['training_status'] !== 'published' || Editorial::ended($lockedEdition)) {
                 throw new RuntimeException('Registration for this edition has closed.');
             }
-            $totalCents = Delegates::cents((string)$lockedEdition['price']) * $quantity;
+            $unitCents = Delegates::cents((string)$lockedEdition['price']);
+            $totalCents = $unitCents * $quantity;
             if ($totalCents > 999999999999) throw new RuntimeException('This group total is too large. Please contact Haleef to book.');
             $amount = sprintf('%d.%02d', intdiv($totalCents,100), $totalCents % 100);
             $edition['currency'] = $lockedEdition['currency'];
@@ -88,6 +95,8 @@ final class OrderService
                 $attendeeId = (int)$pdo->lastInsertId();
                 $number = sprintf('HLR-%s-%06d', date('Y'), $orderId) . ($i ? '-' . ($i + 1) : '');
                 $registration->execute([$orderId,$edition['id'],$attendeeId,$delegate['email'],$number]);
+                $delegates[$i]['registration_number'] = $number;
+                $delegates[$i]['registration_id'] = (int)$pdo->lastInsertId();
             }
 
             $order = [
@@ -99,6 +108,18 @@ final class OrderService
                 'public_token' => $publicToken,
                 'payment_method' => $method,
             ];
+
+            if ($issueInvoice) {
+                try {
+                    $invoice = Invoices::issue($pdo, $order, $lockedEdition, $contact, $billingAddress,
+                        $now, $paymentDue->setTimezone($now->getTimezone()), $unitCents);
+                    RegistrationEmail::queue($pdo, $orderId, $invoice, $delegates);
+                    $order['has_invoice'] = true;
+                } catch (Throwable $exception) {
+                    error_log('Could not issue bank transfer invoice: ' . get_class($exception) . ' (' . $exception->getCode() . ')');
+                    throw new RuntimeException('We couldn’t prepare your invoice. No booking was placed. Please try again or contact Haleef.', 0, $exception);
+                }
+            }
 
             $pdo->commit();
             return $order;
@@ -124,11 +145,12 @@ final class OrderService
                     CASE WHEN o.status='paid' AND e.delivery_mode IN ('online','hybrid')
                          AND EXISTS (SELECT 1 FROM registrations r WHERE r.order_id=o.id AND r.status IN ('confirmed','attended'))
                          THEN e.zoom_url ELSE NULL END AS attendee_zoom_url,
-                    t.title AS training_title, t.slug AS training_slug, b.name AS brand_name
+                    t.title AS training_title, t.slug AS training_slug, b.name AS brand_name, i.invoice_number, i.payment_snapshot
              FROM orders o
              INNER JOIN training_editions e ON e.id = o.edition_id
              INNER JOIN trainings t ON t.id = e.training_id
              INNER JOIN brands b ON b.id = o.brand_id
+             LEFT JOIN order_invoices i ON i.order_id=o.id
              WHERE o.public_token_hash = ? LIMIT 1"
         );
         $statement->execute([hash('sha256', $token)]);
@@ -139,7 +161,9 @@ final class OrderService
 
         $method = $this->paymentMethods->configuredMethod((int) $order['brand_id'], (string) $order['selected_payment_method']);
         $order['payment_method'] = $method;
-        $order['payment_instructions'] = $method['adapter']->customerInstructions($method['configuration'], $order);
+        $order['payment_instructions'] = $order['invoice_number']
+            ? json_decode($order['payment_snapshot'], true, 512, JSON_THROW_ON_ERROR)
+            : $method['adapter']->customerInstructions($method['configuration'], $order);
         return $order;
     }
 }
