@@ -23,7 +23,7 @@ $services = [
         'promise' => 'One connected delivery plan from concept to closing moment.',
         'stages' => [
             ['Discover', 'Define the audience, purpose, format, measures of success and practical constraints.'],
-            ['Design', 'Shape the program, experience, production plan, supplier scope and delivery timeline.'],
+            ['Design', 'Shape the programme, experience, production plan, supplier scope and delivery timeline.'],
             ['Deliver', 'Coordinate speakers, partners, venue, production and on-site operations as one team.'],
         ],
         'outcomes' => ['A clear event roadmap and ownership structure', 'A coordinated experience for speakers, partners and delegates', 'Reduced delivery risk across suppliers and workstreams', 'A post-event view of results and future opportunities'],
@@ -64,7 +64,7 @@ $services = [
             ['Curate', 'Develop the format, facilitator mix, content flow, materials and interaction model.'],
             ['Activate', 'Deliver an engaging experience and capture the insight needed to improve future sessions.'],
         ],
-        'outcomes' => ['A program connected to defined learning objectives', 'Relevant facilitators and participant-centered formats', 'Smooth delivery across in-person or hybrid environments', 'Feedback and insight for continued program development'],
+        'outcomes' => ['A programme connected to defined learning objectives', 'Relevant facilitators and participant-centered formats', 'Smooth delivery across in-person or hybrid environments', 'Feedback and insight for continued programme development'],
     ],
     [
         'number' => '04',

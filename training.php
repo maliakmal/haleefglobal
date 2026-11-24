@@ -19,7 +19,7 @@ require __DIR__ . '/includes/header.php';
     <div class="training-hero-image"><img src="/assets/images/training-session.webp" alt="Professionals taking part in a collaborative training session"></div>
     <div class="training-hero-shade"></div>
     <div class="container training-hero-inner">
-        <span class="eyebrow">Haleef Global Learning Programs</span>
+        <span class="eyebrow">Haleef Global Learning Programmes</span>
         <h1>Learning built for<br><em>the work ahead.</em></h1>
         <div class="training-hero-bottom">
             <p>Tailored programmes that connect expert knowledge, active participation and the real priorities of your organisation.</p>

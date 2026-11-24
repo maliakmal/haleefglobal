@@ -26,7 +26,7 @@
     </div>
     <div class="container footer-bottom">
         <span>© <?= date('Y') ?> Haleef. All rights reserved.</span>
-        <div><a href="<?= page_url('privacy') ?>">Privacy</a><a href="<?= page_url('cookies') ?>">Cookie settings</a><a href="<?= page_url('terms') ?>">Terms</a></div>
+        <div><a href="<?= page_url('privacy') ?>">Privacy</a><a href="<?= page_url('cookies') ?>#cookie-preferences">Cookie settings</a><a href="<?= page_url('terms') ?>">Terms</a></div>
     </div>
 </footer>
 <?php require __DIR__ . '/whatsapp-widget.php'; ?>

@@ -21,7 +21,7 @@ if ($analyticsPath !== '') header('Referrer-Policy: no-referrer');
     <?php if (!empty($shareImage) && filter_var($shareImage, FILTER_VALIDATE_URL)): ?><meta property="og:image" content="<?= e($shareImage) ?>"><?php endif; ?>
     <link rel="stylesheet" href="/assets/css/fonts.css?v=1">
     <link rel="stylesheet" href="/assets/css/site.css?v=3">
-    <link rel="stylesheet" href="/assets/css/cookies.css?v=2">
+    <link rel="stylesheet" href="/assets/css/cookies.css?v=3">
     <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=9"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
 </head>
 <body class="page-<?= e($currentPage) ?>">
