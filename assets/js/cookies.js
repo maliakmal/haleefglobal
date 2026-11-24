@@ -2,13 +2,53 @@
     const notice = document.querySelector('[data-cookie-notice]');
     if (!notice) return;
 
+    const controls = document.querySelector('[data-cookie-controls]');
+    const minimise = notice.querySelector('[data-cookie-minimise]');
+    const launcher = document.querySelector('[data-cookie-expand]');
+    const status = document.querySelector('[data-cookie-status]');
+    const lifetime = 180 * 24 * 60 * 60 * 1000;
+    const collapsedKey = 'haleef_cookie_minimised_v1';
+    // Private browsing may refuse persistent storage. Try the session store too.
+    function access(method, ...args) {
+        if (method === 'setItem') {
+            try {
+                window.localStorage.setItem(...args);
+                try { window.sessionStorage.removeItem(args[0]); } catch {}
+                return;
+            } catch {}
+            // If writing failed (e.g. quota), don't let an older choice override the new one.
+            try { window.localStorage.removeItem(args[0]); } catch {}
+            try { window.sessionStorage.setItem(...args); } catch {}
+            return;
+        }
+        for (const store of ['sessionStorage', 'localStorage']) {
+            try {
+                const result = window[store][method](...args);
+                if (method === 'getItem' && result != null) return result;
+            } catch {}
+        }
+        return null;
+    }
+    const isMinimised = () => Number(access('getItem', collapsedKey)) > Date.now();
+    function showNotice(show, moveFocus = false) {
+        notice.hidden = !show;
+        launcher.hidden = show || Boolean(controls);
+        launcher.setAttribute('aria-expanded', String(show));
+        if (moveFocus) (show ? minimise : launcher).focus({ preventScroll: true });
+    }
+    minimise.addEventListener('click', () => {
+        access('setItem', collapsedKey, String(Date.now() + lifetime));
+        showNotice(false, !controls);
+    });
+    launcher.addEventListener('click', () => {
+        access('removeItem', collapsedKey);
+        showNotice(true, true);
+    });
+
     const measurementId = notice.dataset.analyticsId;
     if (/^G-[A-Z0-9]{4,20}$/.test(measurementId || '')) {
         const publicPath = notice.dataset.analyticsPath;
         const key = 'haleef_analytics_consent_v1';
-        const ttl = 180 * 24 * 60 * 60 * 1000;
-        const status = document.querySelector('[data-cookie-status]');
-        const controls = document.querySelector('[data-cookie-controls]');
         const disabled = 'ga-disable-' + measurementId;
         const choices = ['accepted', 'rejected'];
         const knownEvents = ['contact_enquiry', 'agenda_request', 'begin_checkout', 'whatsapp_click'];
@@ -20,7 +60,7 @@
 
         function savedChoice() {
             try {
-                const item = JSON.parse(window.localStorage.getItem(key) || 'null');
+                const item = JSON.parse(access('getItem', key) || 'null');
                 return item?.property === measurementId && item.until > Date.now() && choices.includes(item.choice) ? item.choice : null;
             } catch { return null; }
         }
@@ -68,7 +108,7 @@
             const config = {
                 send_page_view: false, allow_google_signals: false, allow_ad_personalization_signals: false,
                 page_location: location.origin + publicPath, page_referrer: '', page_title: 'Haleef ' + publicPath,
-                cookie_domain: location.hostname, cookie_expires: ttl / 1000, cookie_update: false
+                cookie_domain: location.hostname, cookie_expires: lifetime / 1000, cookie_update: false
             };
             if (sources.includes(source) && media.includes(medium)) {
                 config.campaign_source = source;
@@ -96,8 +136,14 @@
 
         function apply(choice) {
             consent = choice;
-            notice.hidden = Boolean(controls || choice);
-            if (status) status.textContent = choice === 'accepted' ? 'Analytics is on.' : 'Analytics is off.';
+            showNotice(!controls && !choice && !isMinimised());
+            if (status) status.textContent = choice === 'accepted' ? 'Analytics on.'
+                : choice === 'rejected' ? 'Analytics off — rejected.' : 'Analytics off — no choice saved.';
+            if (controls) {
+                for (const button of controls.querySelectorAll('[data-cookie-choice]')) {
+                    button.setAttribute('aria-pressed', String(choice === button.dataset.cookieChoice));
+                }
+            }
             if (choice === 'accepted') startAnalytics();
             else {
                 window[disabled] = true;
@@ -106,15 +152,14 @@
             }
         }
 
-        if (controls) controls.hidden = false;
         for (const button of document.querySelectorAll('[data-cookie-choice]')) {
+            button.disabled = false;
             button.addEventListener('click', () => {
                 const choice = button.dataset.cookieChoice;
                 if (!choices.includes(choice)) return;
-                try {
-                    window.localStorage.setItem(key, JSON.stringify({ property: measurementId, choice, until: Date.now() + ttl }));
-                } catch {}
+                access('setItem', key, JSON.stringify({ property: measurementId, choice, until: Date.now() + lifetime }));
                 apply(choice);
+                if (!controls) launcher.focus({ preventScroll: true });
             });
         }
         document.addEventListener('click', eventInfo => {
@@ -123,7 +168,7 @@
             if (knownEvents.includes(name)) event(name);
         });
         window.addEventListener('storage', eventInfo => {
-            if (eventInfo.key === key || eventInfo.key === null) apply(savedChoice());
+            if (eventInfo.key === key || eventInfo.key === collapsedKey || eventInfo.key === null) apply(savedChoice());
         });
         window.addEventListener('pageshow', eventInfo => {
             if (eventInfo.persisted) apply(savedChoice());
@@ -134,22 +179,12 @@
 
     // A versioned dismissal only: this is not opt-in to tracking or any vendor.
     const storageKey = 'haleef_cookie_notice_v1';
-    const lifetime = 180 * 24 * 60 * 60 * 1000;
-    const status = document.querySelector('[data-cookie-status]');
     const acknowledge = notice.querySelector('[data-cookie-dismiss]');
-    let dismissed = false;
-    try {
-        dismissed = Number(window.localStorage.getItem(storageKey)) > Date.now();
-        if (!dismissed) window.localStorage.removeItem(storageKey);
-    } catch {
-        // Privacy modes that block storage can still use and dismiss the notice.
-    }
-    notice.hidden = dismissed;
+    const dismissed = Number(access('getItem', storageKey)) > Date.now();
+    showNotice(!controls && !dismissed && !isMinimised());
     acknowledge.addEventListener('click', () => {
-        try {
-            window.localStorage.setItem(storageKey, String(Date.now() + lifetime));
-        } catch {}
-        notice.hidden = true;
+        access('setItem', storageKey, String(Date.now() + lifetime));
+        showNotice(false, !controls);
         if (status) status.textContent = 'Notice dismissed. Only essential cookies are in use.';
     });
 
@@ -157,10 +192,9 @@
     if (reset) {
         reset.hidden = false;
         reset.addEventListener('click', () => {
-            try {
-                window.localStorage.removeItem(storageKey);
-            } catch {}
-            notice.hidden = false;
+            access('removeItem', storageKey);
+            access('removeItem', collapsedKey);
+            showNotice(true);
             if (status) status.textContent = 'The saved dismissal was cleared in this browser.';
             acknowledge.focus();
         });

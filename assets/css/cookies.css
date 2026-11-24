@@ -1,4 +1,22 @@
-.cookie-notice[hidden], [data-cookie-reset][hidden], [data-cookie-controls][hidden] { display: none; }
+.cookie-notice[hidden], .cookie-launcher[hidden], [data-cookie-reset][hidden] { display: none; }
+.cookie-launcher, .cookie-minimise {
+    min-height: 44px;
+    border: 1px solid #cbc7df;
+    background: #fff;
+    color: #24234b;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+}
+.cookie-launcher {
+    position: fixed;
+    z-index: 1000;
+    inset-inline-start: max(1rem, env(safe-area-inset-left));
+    inset-block-end: max(1rem, env(safe-area-inset-bottom));
+    padding: .5rem .9rem;
+    border-radius: 2rem;
+    box-shadow: 0 4px 18px #171b3e20;
+}
 .cookie-notice {
     position: fixed;
     z-index: 1000;
@@ -14,7 +32,8 @@
     border: 1px solid #dbdce8;
     border-radius: 1rem;
 }
-.cookie-notice h2 { font-size: 1.2rem; margin: 0 0 .35rem; }
+.cookie-minimise { position: absolute; inset-block-start: .35rem; inset-inline-end: .5rem; width: 44px; border-radius: 50%; font-size: 1.25rem; }
+.cookie-notice h2 { font-size: 1.2rem; margin: 0 2.7rem .35rem 0; }
 .cookie-notice p { font-size: 1rem; line-height: 1.48; margin: 0 0 .85rem; }
 .cookie-notice-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem 1rem; }
 .cookie-notice .button, [data-cookie-reset] { font: inherit; min-height: 44px; cursor: pointer; }
@@ -30,7 +49,8 @@
     cursor: pointer;
 }
 .cookie-choice:hover, .cookie-notice .cookie-choice:hover { background: #e7e5f4; color: #24234b; }
-.cookie-notice :focus-visible, [data-cookie-reset]:focus-visible { outline: 3px solid #4941b4; outline-offset: 3px; }
+.cookie-notice :focus-visible, .cookie-launcher:focus-visible, #cookie-preferences ~ .cookie-details :focus-visible { outline: 3px solid #4941b4; outline-offset: 3px; }
+#cookie-preferences { scroll-margin-block-start: 7rem; }
 .cookie-details { display: grid; gap: 1.1rem; margin-block: 1.2rem 1.5rem; }
 .cookie-details section { padding: 1.05rem; border: 1px solid #dcdce7; border-radius: .8rem; }
 .cookie-details h3 { margin-block: 0 .35rem; }

@@ -28,11 +28,14 @@ get visitor / >"$tmp/home"
 curl -fsS -D "$tmp/public-headers" -o "$tmp/fresh-home" "$base/"
 if grep -qi '^Set-Cookie:' "$tmp/public-headers"; then exit 1; fi
 grep -Fq 'Essential cookies only' "$tmp/fresh-home"
-grep -Fq 'href="/cookies"' "$tmp/fresh-home"
+grep -Fq 'href="/cookies#cookie-preferences"' "$tmp/fresh-home"
+grep -Fq 'data-cookie-minimise' "$tmp/fresh-home"
+grep -Fq 'data-cookie-expand' "$tmp/fresh-home"
 if grep -Fq 'fonts.googleapis.com' "$tmp/fresh-home"; then exit 1; fi
 get visitor /cookies >"$tmp/cookies"
 grep -Fq 'haleef_session' "$tmp/cookies"
 grep -Fq 'Reset cookie notice' "$tmp/cookies"
+grep -Fq 'id="cookie-preferences"' "$tmp/cookies"
 curl -fsS -D "$tmp/form-headers" -o /dev/null "$base/contact"
 grep -Ei '^Set-Cookie: haleef_session=.*httponly.*samesite=lax' "$tmp/form-headers" >/dev/null
 curl -fsS "$base/assets/js/cookies.js" >/dev/null
@@ -54,7 +57,7 @@ printf 'WHATSAPP_NUMBER=+invalid\n' >"$tmp/whatsapp.env"
 php -r 'require "app/Autoload.php"; Haleef\Support\Env::load($argv[1]); require "includes/config.php"; require "includes/whatsapp-widget.php";' "$tmp/whatsapp.env" >"$tmp/widget"
 test ! -s "$tmp/widget"
 get visitor /training >"$tmp/no-agenda"
-grep -Fq 'Haleef Global Learning Programs' "$tmp/no-agenda"
+grep -Fq 'Haleef Global Learning Programmes' "$tmp/no-agenda"
 if grep -Fq 'href="#agenda"' "$tmp/no-agenda"; then exit 1; fi
 submit() {
     local cookie=$1 path=$2 expected=$3 actual
