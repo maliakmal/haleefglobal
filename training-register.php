@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 require __DIR__ . '/includes/config.php';
 
-use Haleef\Orders\{DelegatePhone, Delegates, Invoices, OrderService};
+use Haleef\Orders\{DelegatePhone, Delegates, Invoices, OrderService, PromoCodes};
 use Haleef\Payments\PaymentMethodRegistry;
 use Haleef\Support\WebSession;
-use Haleef\Support\{Csrf, MoneyDisplay};
+use Haleef\Support\{Csrf, Database, MoneyDisplay};
 use Haleef\Training\{Editorial, TrainingRepository};
 
 $error = null;
@@ -14,6 +14,9 @@ $edition = null;
 $methods = [];
 $posted = is_array($_POST['delegates'] ?? null) ? array_slice(array_values($_POST['delegates']),0,Delegates::LIMIT) : [];
 $selectedMethod = is_string($_POST['payment_method'] ?? null) ? $_POST['payment_method'] : '';
+$promoCode = substr(PromoCodes::normalize($_POST['promo_code'] ?? ''), 0, 80);
+$promo = null;
+$canQuote = false;
 try {
     $edition = (new TrainingRepository())->findOpenEdition((string) ($_GET['edition'] ?? ''));
     if (!$edition) throw new RuntimeException('This training edition is not currently accepting registrations.');
@@ -30,12 +33,14 @@ try {
         } elseif (isset($_POST['remove_delegate'])) {
             $remove = filter_var($_POST['remove_delegate'], FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
             if ($remove !== false && isset($posted[$remove])) array_splice($posted,$remove,1);
-        } else {
+        } elseif (!isset($_POST['apply_promo'])) {
+            $canQuote = true;
             $order = (new OrderService())->create($edition, $_POST);
             if (!empty($order['has_invoice'])) Invoices::grant($order);
             header('Location: /training/booking/' . $order['public_token']);
             exit;
         }
+        $canQuote = isset($_POST['apply_promo']) || !empty($_POST['promo_rate']);
     }
 } catch (Throwable $exception) {
     if ($exception instanceof PDOException) error_log($exception->getMessage());
@@ -46,6 +51,15 @@ $rows = $posted ?: [[]];
 $quantity = count($rows);
 $currency = $edition['currency'] ?? '';
 $unitCents = Delegates::cents((string)($edition['price'] ?? '0'));
+$subtotalCents = $unitCents * $quantity;
+if ($edition && $canQuote && $promoCode !== '') {
+    try {
+        $promo = PromoCodes::quote(Database::connection(), $promoCode, PromoCodes::contactEmail($rows[0]['email'] ?? ''),
+            (int)$edition['training_id'], $subtotalCents);
+    } catch (Throwable $exception) {
+        $error ??= $exception instanceof PDOException ? 'The promo code could not be checked right now.' : $exception->getMessage();
+    }
+}
 $pageTitle = $edition ? 'Delegate registration — ' . $edition['training_title'] : 'Delegate registration';
 $currentPage = 'training';
 $renderDelegate = static function (int|string $index, mixed $row): void {
@@ -122,9 +136,18 @@ require __DIR__ . '/includes/header.php';
             </div>
             <aside class="delegate-totals" aria-label="Booking summary">
                 <span class="eyebrow">Your booking</span><h2>Registration summary</h2>
+                <div class="delegate-fields">
+                    <label>Promo code (optional)<input name="promo_code" maxlength="40" autocomplete="off" value="<?= e($promoCode) ?>"></label>
+                </div>
+                <button class="delegate-add" type="submit" name="apply_promo" value="1" formnovalidate>Apply promo code</button>
+                <input type="hidden" name="promo_rate" value="<?= e((string)($promo['percentage'] ?? '')) ?>">
+                <input type="hidden" name="promo_unit" value="<?= $unitCents ?>">
+                <p data-promo-notice role="status"><?= $promo ? 'Promo applied to the whole booking.' : 'Use the booking contact’s email when applying a code.' ?></p>
                 <dl><div><dt>Price per delegate</dt><dd><?= e(MoneyDisplay::format($unitCents / 100,$currency)) ?></dd></div>
                     <div><dt>Delegates</dt><dd data-delegate-count><?= $quantity ?></dd></div>
-                    <div class="delegate-total-line"><dt>Total</dt><dd data-delegate-total aria-live="polite"><?= e(MoneyDisplay::format($unitCents * $quantity / 100,$currency)) ?></dd></div>
+                    <div><dt>Subtotal</dt><dd data-delegate-subtotal><?= e(MoneyDisplay::format($subtotalCents / 100,$currency)) ?></dd></div>
+                    <div data-promo-line<?= $promo ? '' : ' hidden' ?>><dt>Promo discount</dt><dd data-promo-discount><?= $promo ? '−' . e(MoneyDisplay::format($promo['discount'] / 100,$currency)) : '' ?></dd></div>
+                    <div class="delegate-total-line"><dt>Total</dt><dd data-delegate-total aria-live="polite"><?= e(MoneyDisplay::format(($subtotalCents - ($promo['discount'] ?? 0)) / 100,$currency)) ?></dd></div>
                 </dl>
                 <button class="button button-dark delegate-submit" type="submit">Continue to payment</button>
                 <p>Seats are confirmed once payment is received and verified.</p>
@@ -133,5 +156,5 @@ require __DIR__ . '/includes/header.php';
         <?php endif; ?>
     </div>
 </section>
-<?php if ($edition && $methods): ?><script src="/assets/js/delegate-registration.js?v=2" defer></script><?php endif; ?>
+<?php if ($edition && $methods): ?><script src="/assets/js/delegate-registration.js?v=3" defer></script><?php endif; ?>
 <?php require __DIR__ . '/includes/footer.php'; ?>

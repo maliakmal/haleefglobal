@@ -42,9 +42,19 @@ final class OrderService
                 throw new RuntimeException('Registration for this edition has closed.');
             }
             $unitCents = Delegates::cents((string)$lockedEdition['price']);
-            $totalCents = $unitCents * $quantity;
-            if ($totalCents > 999999999999) throw new RuntimeException('This group total is too large. Please contact Haleef to book.');
-            $amount = sprintf('%d.%02d', intdiv($totalCents,100), $totalCents % 100);
+            $subtotalCents = $unitCents * $quantity;
+            if ($subtotalCents > 999999999999) throw new RuntimeException('This group total is too large. Please contact Haleef to book.');
+            $promoCode = PromoCodes::normalize($input['promo_code'] ?? '');
+            $promo = null;
+            if ($promoCode !== '') {
+                $promo = PromoCodes::quote($pdo, $promoCode, $contact['email'], (int)$lockedEdition['training_id'], $subtotalCents, true);
+                if ((string)$promo['percentage'] !== ($input['promo_rate'] ?? null)
+                    || (string)$unitCents !== ($input['promo_unit'] ?? null)) {
+                    throw new RuntimeException('Apply the promo code again to review your current discount before booking.');
+                }
+            }
+            $totalCents = $subtotalCents - ($promo['discount'] ?? 0);
+            $amount = PromoCodes::amount($totalCents);
             $edition['currency'] = $lockedEdition['currency'];
             if ($lockedEdition['capacity'] !== null) {
                 $seatStatement = $pdo->prepare(
@@ -70,15 +80,19 @@ final class OrderService
 
             $temporary = 'TMP-' . bin2hex(random_bytes(10));
             $orderStatement = $pdo->prepare(
-                'INSERT INTO orders (brand_id, edition_id, order_number, public_token_hash, purchaser_name, purchaser_email, purchaser_phone, company_name, quantity, subtotal, total, currency, selected_payment_method, payment_due_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO orders (brand_id, edition_id, order_number, public_token_hash, purchaser_name, purchaser_email, purchaser_phone, company_name, quantity, subtotal, total, currency, selected_payment_method, payment_due_at, promo_code)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
             $orderStatement->execute([
                 $edition['brand_id'], $edition['id'], $temporary, hash('sha256', $publicToken), $contact['name'], $contact['email'],
-                $contact['phone'], $contact['company'], $quantity, $amount, $amount, $edition['currency'], $paymentCode,
-                $paymentDue->setTimezone($now->getTimezone())->format('Y-m-d H:i:s'),
+                $contact['phone'], $contact['company'], $quantity, PromoCodes::amount($subtotalCents), $amount, $edition['currency'], $paymentCode,
+                $paymentDue->setTimezone($now->getTimezone())->format('Y-m-d H:i:s'), $promo['code'] ?? null,
             ]);
             $orderId = (int) $pdo->lastInsertId();
+            if ($promo !== null) {
+                $pdo->prepare('INSERT INTO promo_redemptions (order_id,promo_id,contact_email) VALUES (?,?,?)')
+                    ->execute([$orderId,$promo['id'],$promo['email']]);
+            }
             $orderNumber = sprintf('HL-%s-%06d', date('Y'), $orderId);
             $pdo->prepare('UPDATE orders SET order_number = ? WHERE id = ?')->execute([$orderNumber, $orderId]);
 
@@ -102,6 +116,8 @@ final class OrderService
                 'id' => $orderId,
                 'order_number' => $orderNumber,
                 'total' => (float)$amount,
+                'total_cents' => $totalCents,
+                'promo_code' => $promo['code'] ?? null,
                 'quantity' => $quantity,
                 'currency' => $edition['currency'],
                 'public_token' => $publicToken,

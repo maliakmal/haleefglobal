@@ -62,7 +62,8 @@ final class Invoices
             'issued'=>$issued->format('d M Y'),
             'due'=>$due->format('d M Y, H:i T'),
             'name'=>$contact['name'],'company'=>$contact['company'],'email'=>$contact['email'],'phone'=>$contact['phone'],'address'=>$address,
-            'currency'=>$order['currency'],'quantity'=>$order['quantity'],'unit_cents'=>$unitCents,'total_cents'=>$unitCents * $order['quantity'],
+            'currency'=>$order['currency'],'quantity'=>$order['quantity'],'unit_cents'=>$unitCents,
+            'subtotal_cents'=>$unitCents * $order['quantity'],'total_cents'=>$order['total_cents'],'promo_code'=>$order['promo_code'],
             'issuer'=>self::issuer(),'bank'=>$bank,
         ];
         $pdf = InvoicePdf::render($data);

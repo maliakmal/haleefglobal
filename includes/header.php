@@ -23,7 +23,7 @@ if ($analyticsPath !== '') header('Referrer-Policy: no-referrer');
     <link rel="stylesheet" href="/assets/css/site.css?v=3">
     <link rel="stylesheet" href="/assets/css/cookies.css?v=3">
     <?php if ($currentPage === 'contact'): ?><link rel="stylesheet" href="/assets/css/contact-offices.css?v=2"><?php endif; ?>
-    <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=9"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
+    <?php if ($currentPage === 'training'): ?><link rel="stylesheet" href="/assets/css/learning-editorial.css?v=10"><script src="/assets/js/learning-reveal.js" defer></script><?php endif; ?>
 </head>
 <body class="page-<?= e($currentPage) ?>">
 <header class="site-header<?= !empty($solidHeader) ? ' site-header-solid' : '' ?>" data-header>

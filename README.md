@@ -52,6 +52,12 @@ The repository now includes the first training-management foundation: database-b
 
 Run `php bin/expire-unpaid-orders.php` from cron at least hourly. It releases seats held by unpaid bank-transfer orders after their configured payment deadline.
 
+### Promo codes
+
+Use **Admin → Promo codes** to create a 1–99% discount, enable or disable it, set optional dates and a total-use limit (use `1` for a globally single-use code), and scope it to all programmes or one programme. A private code requires a list of eligible booking-contact emails. This matches the entered email; it does not verify inbox ownership.
+
+Each normalized booking-contact email may use a given code once, even across editions. The discount applies to all delegates in the booking. A pending bank transfer reserves the use; a paid booking keeps it, and cancellation (including the existing unpaid-order expiry job) releases it. Checkout, the saved order, and the invoice use the same discounted total. Editing or disabling the code does not change existing orders. Codes cannot be stacked.
+
 ### Bank-transfer invoices and registration emails
 
 Deploy through Actions; it bundles the locked Composer dependencies and the deploy script applies the additive migration. For local development, run `composer install`. The PDF renderer needs PHP DOM, GD and Mbstring on both the web and CLI runtimes (e.g. `php8.3-xml`, `php8.3-gd`, `php8.3-mbstring` on the droplet).
