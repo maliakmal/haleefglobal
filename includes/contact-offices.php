@@ -7,7 +7,6 @@ $offices = [
         'company' => 'Haleef Global FZC LLC',
         'address' => ['Office BC-878846, 26th Floor', 'Amber Gem Tower, Business District',
             'Ajman NuVentures Centre Free Zone (ANCFZ)', 'Ajman, United Arab Emirates'],
-        'map' => 'Amber Gem Tower, Ajman, United Arab Emirates',
     ],
     [
         'key' => 'budapest',
@@ -15,7 +14,6 @@ $offices = [
         'country' => 'Hungary',
         'company' => 'Haleef Global Kft.',
         'address' => ['Páskomliget utca 67, 6/25', '1156 Budapest', 'Hungary'],
-        'map' => '1156 Budapest, Páskomliget utca 67, Hungary',
     ],
 ];
 ?>
@@ -27,7 +25,6 @@ $offices = [
         </header>
         <div class="contact-office-grid">
             <?php foreach ($offices as $office): ?>
-                <?php $mapUrl = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($office['map']); ?>
                 <article class="contact-office-card contact-office-<?= e($office['key']) ?>" aria-labelledby="office-<?= e($office['key']) ?>">
                     <header class="contact-office-card-header">
                         <div>
@@ -43,7 +40,6 @@ $offices = [
                                 <span><?= e($addressLine) ?></span>
                             <?php endforeach; ?>
                         </address>
-                        <a class="contact-office-map" href="<?= e($mapUrl) ?>" target="_blank" rel="noopener noreferrer">Open in Google Maps<span class="sr-only"> — <?= e($office['city']) ?> (opens in a new tab)</span></a>
                     </div>
                 </article>
             <?php endforeach; ?>
