@@ -160,3 +160,4 @@
 .site-header-solid + main .learning-hero{padding-top:clamp(7rem,12vw,9.5rem)}
 .site-header-solid + main .learning-preview{padding-top:6.5rem}
 .site-header-solid + main .learning-preview + .learning-hero{padding-top:clamp(2.2rem,5vw,5rem)}
+.delegate-totals dl [data-promo-line][hidden]{display:none}

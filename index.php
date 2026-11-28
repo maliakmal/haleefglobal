@@ -142,6 +142,11 @@ if (preg_match('#^admin/orders/([1-9][0-9]*)/invoice$#D', $route, $matches)) {
     exit;
 }
 
+if ($route === 'admin/promo-codes') {
+    require __DIR__ . '/admin/promo-codes.php';
+    exit;
+}
+
 if ($route === 'admin/payment-methods') {
     require __DIR__ . '/admin/payment-methods.php';
     exit;

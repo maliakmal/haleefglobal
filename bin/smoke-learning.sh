@@ -332,4 +332,52 @@ get admin '/admin/orders/1?format=csv&list=delegates&q=Casey' >"$tmp/delegates.c
 grep -Fq 'casey@example.test' "$tmp/delegates.csv"
 ! grep -Fq 'attendee@example.test' "$tmp/delegates.csv" || exit 1
 php bin/smoke-email-migration.php
+
+# Apply a percentage to the full group, reserve it per contact, and release it on cancellation.
+php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->exec("UPDATE training_editions SET capacity=NULL WHERE id=1");'
+[[ "$(status /admin/promo-codes)" == 302 ]]
+get admin /admin/promo-codes >"$tmp/promo-admin"
+grep -q 'New promo code' "$tmp/promo-admin"
+submit admin /admin/promo-codes 303 -d "_csrf=$token&code=GROUP10&percentage=10&enabled=1"
+submit admin /admin/promo-codes 303 -d "_csrf=$token&code=PRIVATE20&percentage=20&enabled=1&private_only=1&training_id=1&max_uses=1&emails=vip%40example.test"
+submit admin /admin/promo-codes 303 -d "_csrf=$token&code=FUTURE&percentage=10&enabled=1&starts_at=2040-01-01T09%3A00"
+submit admin /admin/promo-codes 303 -d "_csrf=$token&code=ENDED&percentage=10&enabled=1&ends_at=2020-01-01T09%3A00"
+submit visitor "$register" 200 "${common[@]}" "${group[@]}" -F 'promo_code=group10' -F 'apply_promo=1'
+grep -Fq 'Promo applied to the whole booking' "$tmp/body"
+grep -Fq '€239.80' "$tmp/body"
+grep -Fq '€2,158.20' "$tmp/body"
+submit visitor "$register" 200 "${common[@]}" "${group[@]}" -F 'promo_code=GROUP10' -F 'promo_rate=99' -F 'promo_unit=119900'
+grep -Fq 'Apply the promo code again' "$tmp/body"
+for code in PRIVATE20 FUTURE ENDED; do
+    submit visitor "$register" 200 "${common[@]}" "${group[@]}" -F "promo_code=$code" -F 'apply_promo=1'
+    grep -Fq 'This promo code is not available' "$tmp/body"
+done
+promo=(-F 'promo_code=GROUP10' -F 'promo_rate=10' -F 'promo_unit=119900')
+submit visitor "$register" 302 "${common[@]}" "${group[@]}" "${promo[@]}"
+promo_booking="$(awk 'tolower($1)=="location:" {gsub(/\r/,"",$2);print $2}' "$tmp/headers")"
+get visitor "$promo_booking" >"$tmp/promo-booking"
+grep -Fq '2 delegates · €2,158.20 total' "$tmp/promo-booking"
+grep -Fq 'Promo code GROUP10' "$tmp/promo-booking"
+php -r 'require "includes/bootstrap.php"; $db=Haleef\Support\Database::connection(); $q=$db->query("SELECT body FROM order_registration_email_jobs WHERE order_id=4 AND attach_invoice=1")->fetchColumn(); if (!str_contains((string)$q,"2,158.20")) throw new RuntimeException("Invoice email uses the wrong amount");'
+submit visitor "$register" 200 "${common[@]}" "${group[@]}" "${promo[@]}"
+grep -Fq 'This promo code is not available' "$tmp/body"
+php -r 'require "includes/bootstrap.php"; Haleef\Support\Database::connection()->exec("UPDATE orders SET payment_due_at=NOW()-INTERVAL 1 HOUR WHERE id=4");'
+php bin/expire-unpaid-orders.php
+submit visitor "$register" 302 "${common[@]}" "${group[@]}" "${promo[@]}"
+submit admin /admin/orders/5 302 -F "_csrf=$token" -F 'reference=PROMO-SMOKE' -F 'amount=2158.20' -F "evidence=@$tmp/agenda.pdf"
+submit visitor "$register" 200 "${common[@]}" "${group[@]}" "${promo[@]}"
+grep -Fq 'This promo code is not available' "$tmp/body"
+args=()
+delegate_args 0 VIP VIP@Example.Test
+submit visitor "$register" 200 "${common[@]}" "${args[@]}" -F 'promo_code=PRIVATE20' -F 'apply_promo=1'
+grep -Fq '€959.20' "$tmp/body"
+submit visitor "$register" 302 "${common[@]}" "${args[@]}" -F 'promo_code=PRIVATE20' -F 'promo_rate=20' -F 'promo_unit=119900'
+submit visitor "$register" 302 "${common[@]}" "${args[@]}" "${promo[@]}"
+submit admin '/admin/promo-codes?edit=1' 303 -d "_csrf=$token&percentage=25"
+submit visitor "$register" 200 "${common[@]}" "${args[@]}" -F 'promo_code=GROUP10' -F 'apply_promo=1'
+grep -Fq 'This promo code is not available' "$tmp/body"
+get visitor "$promo_booking" >"$tmp/promo-snapshot"
+grep -Fq '2 delegates · €2,158.20 total' "$tmp/promo-snapshot"
+get admin '/admin/promo-codes?format=csv&q=GROUP10' >"$tmp/promo.csv"
+grep -Fq 'GROUP10,25,Disabled' "$tmp/promo.csv"
 printf 'Learning smoke checks passed.\n'

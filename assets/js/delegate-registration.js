@@ -6,6 +6,8 @@ if (delegateForm) {
     const status = delegateForm.querySelector('[data-delegate-status]');
     const limit = Number(delegateForm.dataset.limit);
     const number = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const rate = delegateForm.elements.promo_rate;
+    const money = cents => delegateForm.dataset.currencyPattern.replace('0.00', number.format(cents / 100));
     const cards = () => [...list.querySelectorAll('[data-delegate]')];
     add.hidden = false;
 
@@ -25,10 +27,21 @@ if (delegateForm) {
         });
         add.disabled = rows.length >= limit;
         delegateForm.querySelector('[data-delegate-count]').textContent = rows.length;
-        delegateForm.querySelector('[data-delegate-total]').textContent =
-            delegateForm.dataset.currencyPattern.replace('0.00', number.format(Number(delegateForm.dataset.unitCents) * rows.length / 100));
+        const subtotal = Number(delegateForm.dataset.unitCents) * rows.length;
+        const discount = Math.max(0, Math.min(subtotal - 1, Math.floor((subtotal * Number(rate.value) + 50) / 100)));
+        delegateForm.querySelector('[data-delegate-subtotal]').textContent = money(subtotal);
+        delegateForm.querySelector('[data-promo-line]').hidden = !discount;
+        delegateForm.querySelector('[data-promo-discount]').textContent = discount ? '−' + money(discount) : '';
+        delegateForm.querySelector('[data-delegate-total]').textContent = money(subtotal - discount);
     }
 
+    delegateForm.addEventListener('input', event => {
+        if (event.target.name !== 'promo_code' && event.target.name !== 'delegates[0][email]') return;
+        if (!rate.value) return;
+        rate.value = '';
+        delegateForm.querySelector('[data-promo-notice]').textContent = 'Apply the promo code again to update your total.';
+        refresh();
+    });
     add.addEventListener('click', () => {
         if (cards().length >= limit) return;
         const newRow = template.content.cloneNode(true);

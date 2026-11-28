@@ -48,7 +48,8 @@ h2 { font-size: 12pt; color: #473161; margin: 0 0 5pt; }
 </td></tr></table>
 <table class="items"><thead><tr><th style="width:48%">Description</th><th class="numeric" style="width:9%">Qty</th><th class="numeric" style="width:20%">Unit price</th><th class="numeric" style="width:23%">Amount</th></tr></thead>
 <tbody><tr><td><strong><?= $esc($invoice['training']) ?></strong><br><?= $esc($invoice['edition']) ?></td><td class="numeric"><?= $invoice['quantity'] ?></td>
-<td class="numeric"><?= $esc($invoice['currency']) ?> <?= $money($invoice['unit_cents']) ?></td><td class="numeric"><?= $esc($invoice['currency']) ?> <?= $money($invoice['total_cents']) ?></td></tr></tbody></table>
+<td class="numeric"><?= $esc($invoice['currency']) ?> <?= $money($invoice['unit_cents']) ?></td><td class="numeric"><?= $esc($invoice['currency']) ?> <?= $money($invoice['subtotal_cents']) ?></td></tr></tbody></table>
+<?php if ($invoice['promo_code']): ?><p>Subtotal: <?= $esc($invoice['currency']) ?> <?= $money($invoice['subtotal_cents']) ?><br>Promo code <?= $esc($invoice['promo_code']) ?>: &minus;<?= $esc($invoice['currency']) ?> <?= $money($invoice['subtotal_cents'] - $invoice['total_cents']) ?></p><?php endif; ?>
 <p class="total"><strong>Total due: <?= $esc($invoice['currency']) ?> <?= $money($invoice['total_cents']) ?></strong></p>
 <div class="transfer"><h2>Bank transfer details</h2>
 <?php foreach (['account_name'=>'Account name','bank_name'=>'Bank','iban'=>'IBAN','swift'=>'SWIFT / BIC','reference'=>'Payment reference'] as $key => $label): ?>
