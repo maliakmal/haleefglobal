@@ -1,0 +1,49 @@
+.contact-office-jump {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: 1.75rem;
+    padding: .65rem .9rem;
+    border: 1px solid #a9b5ed80;
+    border-radius: .65rem;
+    color: #fff;
+    font-weight: 600;
+}
+.contact-office-jump:hover { background: #ffffff1c; color: #fff; }
+.contact-offices { scroll-margin-top: 5.75rem; background: #f4f5ff; color: #181736; }
+.contact-offices .eyebrow { color: #494286; }
+.contact-offices-heading h2 { margin: .45rem 0 clamp(1.25rem, 3vw, 2.25rem); font-size: clamp(2.1rem, 4.5vw, 4rem); }
+.contact-office-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1rem, 3vw, 2rem); }
+.contact-office-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #dbe0f5;
+    border-radius: 1.15rem;
+    background: #fff;
+    box-shadow: 0 12px 32px #26215810;
+}
+.contact-office-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    color: #fff;
+    background: radial-gradient(ellipse at 100% 0%, #5260b3, transparent 62%), #252354;
+}
+.contact-office-budapest .contact-office-card-header {
+    background: radial-gradient(ellipse at 100% 0%, #6750a2, transparent 62%), #292049;
+}
+.contact-office-card-header p { margin: 0 0 .35rem; color: #edf0ff; font-size: .95rem; }
+.contact-office-card-header h3 { margin: 0; font-size: clamp(1.85rem, 4vw, 3rem); }
+.contact-office-card-header svg { flex: none; }
+.contact-office-card-body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; padding: clamp(1.25rem, 3vw, 2rem); }
+.contact-office-company { margin: 0 0 .6rem; font-weight: 700; font-size: 1.1rem; }
+.contact-office-card address { margin: 0 0 1.5rem; font-style: normal; line-height: 1.55; color: #3f4360; }
+.contact-office-card address span { display: block; }
+.contact-office-map { display: inline-flex; align-items: center; min-height: 44px; margin-top: auto; padding: .65rem .9rem; border-radius: .55rem; background: #edf0ff; color: #28245b; font-weight: 700; }
+.contact-office-map:hover { background: #dce2ff; color: #28245b; }
+.contact-office-map:focus-visible, .contact-office-jump:focus-visible { outline: 3px solid #7465d8; outline-offset: 4px; }
+@media (max-width: 640px) { .contact-office-grid { grid-template-columns: 1fr; } }
