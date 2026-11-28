@@ -76,7 +76,8 @@ grep -Fq 'Office BC-878846, 26th Floor' "$tmp/contact-form"
 grep -Fq 'Haleef Global Kft.' "$tmp/contact-form"
 grep -Fq 'Páskomliget utca 67, 6/25' "$tmp/contact-form"
 grep -Fq '1156 Budapest' "$tmp/contact-form"
-[[ "$(grep -c 'https://www.google.com/maps/search/?api=1&amp;query=' "$tmp/contact-form")" -eq 2 ]]
+grep -Fq 'United Arab Emirates · Hungary' "$tmp/contact-form"
+! grep -Eqi 'google\.com/maps|maps\.google\.com|maps\.app\.goo\.gl' "$tmp/contact-form" || exit 1
 ! grep -Eqi '<iframe[^>]+google' "$tmp/contact-form" || exit 1
 contact_token="$(csrf <"$tmp/contact-form")"
 submit visitor /handlers/contact-submit.php 303 -d 'name=Test&email=fixture%40example.test&message=Test'

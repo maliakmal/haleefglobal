@@ -17,7 +17,7 @@
             <a href="mailto:<?= e(SITE_EMAIL) ?>"><?= e(SITE_EMAIL) ?></a>
             <a href="mailto:ask@haleeflearning.com">ask@haleeflearning.com</a>
             <a href="<?= LINKEDIN_URL ?>" target="_blank" rel="noopener">LinkedIn ↗</a>
-            <span>Dubai, United Arab Emirates</span>
+            <span>United Arab Emirates · Hungary</span>
         </div>
         <div class="footer-action">
             <span class="eyebrow">Have something in mind?</span>

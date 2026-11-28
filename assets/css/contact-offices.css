@@ -41,9 +41,7 @@
 .contact-office-card-header svg { flex: none; }
 .contact-office-card-body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; padding: clamp(1.25rem, 3vw, 2rem); }
 .contact-office-company { margin: 0 0 .6rem; font-weight: 700; font-size: 1.1rem; }
-.contact-office-card address { margin: 0 0 1.5rem; font-style: normal; line-height: 1.55; color: #3f4360; }
+.contact-office-card address { margin: 0; font-style: normal; line-height: 1.55; color: #3f4360; }
 .contact-office-card address span { display: block; }
-.contact-office-map { display: inline-flex; align-items: center; min-height: 44px; margin-top: auto; padding: .65rem .9rem; border-radius: .55rem; background: #edf0ff; color: #28245b; font-weight: 700; }
-.contact-office-map:hover { background: #dce2ff; color: #28245b; }
-.contact-office-map:focus-visible, .contact-office-jump:focus-visible { outline: 3px solid #7465d8; outline-offset: 4px; }
+.contact-office-jump:focus-visible { outline: 3px solid #7465d8; outline-offset: 4px; }
 @media (max-width: 640px) { .contact-office-grid { grid-template-columns: 1fr; } }
